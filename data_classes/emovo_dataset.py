@@ -12,6 +12,8 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
         self.label_dict = label_dict
         self.audio_files: list[str] = []
         self.labels: list[int] = []
+        self.spectrogram_transform = transforms.MelSpectrogram()
+
 
         # Scansione della directory degli attori
         for actor_dir in os.listdir(data_path):
@@ -44,4 +46,7 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
         # Carica il file audio
         waveform, sample_rate = torchaudio.load(audio_path)
 
-        return waveform, sample_rate, label
+        # Genera lo spettrogramma
+        spectrogram = self.spectrogram_transform(waveform)
+
+        return spectrogram, sample_rate, label
