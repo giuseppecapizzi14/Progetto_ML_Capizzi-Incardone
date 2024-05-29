@@ -5,70 +5,30 @@ import torch.functional as F
 class CNN(nn.Module):
     def __init__(
         self,
-        input_size: int,
-        hidden_layers: list,
         num_classes: int,
         dropout: float = 0.2
     ):
         
         super(CNN, self).__init__()
 
-        # self.conv1=nn.Sequential(
-        #     nn.Conv1d(1, 16,kernel_size=3,stride=1,padding=1),
-        #     nn.ReLU(),
-        #     nn.MaxPool1d(kernel_size=2)
-        # )
-        # self.conv2=nn.Sequential(
-        #     nn.Conv1d(16, 32,kernel_size=3,stride=1,padding=1),
-        #     nn.ReLU(),
-        #     nn.MaxPool1d(kernel_size=2)
-        # )
-        # self.conv3=nn.Sequential(
-        #     nn.Conv1d(32, 64,kernel_size=3,stride=1,padding=1),
-        #     nn.ReLU(),
-        #     nn.MaxPool1d(kernel_size=2)
-        # )
-
-        
         # Primo strato convoluzionale
-        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, stride=1, padding=1)
-        # Numero di canali in input: 1 (un canale per le onde sonore)
-        # Numero di filtri (feature maps) in uscita: 16
-        # Dimensione del kernel: 3 (larghezza del filtro)
-        # Stride: 1 (il filtro si sposta di una posizione alla volta)
-        # Padding: 1 (aggiunge un padding di 1 ai bordi per mantenere la stessa dimensione dell'input)
+        self.conv1 = nn.Conv1d(in_channels = 2, out_channels = 16, kernel_size = 10, stride = 5)
 
         # Secondo strato convoluzionale
-        self.conv2 = nn.Conv1d(16, 32, kernel_size=3, stride=1, padding=1)
-        # Numero di canali in input: 16 (output del primo strato)
-        # Numero di filtri (feature maps) in uscita: 32
-        # Dimensione del kernel: 3
-        # Stride: 1
-        # Padding: 1
-
+        self.conv2 = nn.Conv1d(in_channels = 16, out_channels = 32, kernel_size = 3, stride = 2)
+    
         # Terzo strato convoluzionale
-        self.conv3 = nn.Conv1d(32, 64, kernel_size=3, stride=1, padding=1)
-        # Numero di canali in input: 32 (output del secondo strato)
-        # Numero di filtri (feature maps) in uscita: 64
-        # Dimensione del kernel: 3
-        # Stride: 1
-        # Padding: 1
+        self.conv3 = nn.Conv1d(in_channels = 32, out_channels = 64, kernel_size = 2, stride = 2)
 
         # Max pooling
-        self.pool = nn.MaxPool1d(kernel_size=2, stride=2, padding=0)
-        # Dimensione della finestra di pooling: 2 (riduce la lunghezza dell'output di un fattore di 2)
-        # Stride: 2 (il pooling si sposta di 2 posizioni alla volta)
-        # Padding: 0 (nessun padding)
+        self.pool = nn.MaxPool1d(kernel_size = 2, stride = 2)
 
         # Primo strato completamente connesso
-        self.fc1 = nn.Linear(64 * 4000, 128)
+        self.fc1 = nn.Linear(in_features = 64 * 4000, out_features = 128)
         # Numero di unità in input: 64 * 4000 (64 canali * lunghezza del segnale dopo il pooling)
-        # Numero di unità in output: 128
 
         # Secondo strato completamente connesso (output)
-        self.fc2 = nn.Linear(128, num_classes)
-        # Numero di unità in input: 128
-        # Numero di unità in output: num_classes (numero di classi di output)
+        self.fc2 = nn.Linear(in_features = 128, out_features = num_classes)
 
         # Dropout per ridurre l'overfitting
         self.dropout = nn.Dropout(0.5)
