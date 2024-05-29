@@ -4,7 +4,7 @@ import os
 from torch.utils.data import Dataset
 import torchaudio.transforms as transforms
 
-class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
+class EMOVODataset(Dataset):
     LABEL_DICT = {
         'dis': 0,
         'gio': 1,
@@ -60,7 +60,17 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
     def __len__(self) -> int:
         return len(self.audio_files)
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int, int]:
+    def __getitem__(self, idx: int):
+        """ 
+        
+        Returns:
+
+            dict:
+                "waveform" (tensor): un sample del dataset
+                "sample_rate" (int): il target sample rate utilizzato nel modello
+                "label" (int): una label del dataset
+        
+        """
         audio_path = self.audio_files[idx]
         label = self.labels[idx]
 
@@ -79,4 +89,8 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
             padding = self.max_sample_len - waveform_sample_len
             waveform = torch.nn.functional.pad(waveform, (1, padding))
 
-        return waveform, sample_rate, label
+        return {
+            "waveform": waveform, 
+            "sample_rate": sample_rate, 
+            "label": label
+        }
