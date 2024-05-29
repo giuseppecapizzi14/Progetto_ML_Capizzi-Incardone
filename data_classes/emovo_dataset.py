@@ -7,13 +7,13 @@ import torch.nn.functional as F
 
 class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
     LABEL_DICT = {
-        'dis': 0,
-        'gio': 1,
-        'pau': 2,
-        'rab': 3,
-        'sor': 4,
-        'tri': 5,
-        'neu': 6
+        "dis": 0,
+        "gio": 1,
+        "pau": 2,
+        "rab": 3,
+        "sor": 4,
+        "tri": 5,
+        "neu": 6,
     }
 
     TARGET_SAMPLE_RATE = 16_000
@@ -33,7 +33,7 @@ class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
             if os.path.isdir(actor_path):
                 for file_name in os.listdir(actor_path):
                     # Controlla se il file ha l'estenzione .wav
-                    if file_name.endswith('.wav'):
+                    if file_name.endswith(".wav"):
                         # Estrae l'etichetta dal nome del file usando la funzione extract_label
                         label = self.extract_label(file_name)
                         if label in EMOVODataset.LABEL_DICT:
