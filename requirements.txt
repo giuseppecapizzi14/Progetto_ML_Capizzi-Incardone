@@ -5,3 +5,4 @@ git+https://github.com/MorenoLaQuatra/yaml_config_override
 addict
 torchaudio
 tqdm
+# PySoundFile
