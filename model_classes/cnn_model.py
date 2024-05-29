@@ -8,7 +8,6 @@ class CNN(nn.Module):
         num_classes: int,
         dropout: float
     ):
-        
         super(CNN, self).__init__()
 
         # Primo strato convoluzionale
@@ -16,7 +15,7 @@ class CNN(nn.Module):
 
         # Secondo strato convoluzionale
         self.conv2 = nn.Conv1d(in_channels = 16, out_channels = 32, kernel_size = 3, stride = 2)
-    
+
         # Terzo strato convoluzionale
         self.conv3 = nn.Conv1d(in_channels = 32, out_channels = 64, kernel_size = 2, stride = 2)
 
@@ -33,7 +32,7 @@ class CNN(nn.Module):
         # Dropout per ridurre l'overfitting
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         # Passaggio attraverso il primo strato convoluzionale seguito da attivazione ReLU e max pooling
         x = self.pool(nn.ReLU(self.conv1(x)))
         # Passaggio attraverso il secondo strato convoluzionale seguito da attivazione ReLU e max pooling
@@ -48,5 +47,3 @@ class CNN(nn.Module):
         # Passaggio attraverso il secondo strato completamente connesso (output)
         x = self.fc2(x)
         return x
-
-

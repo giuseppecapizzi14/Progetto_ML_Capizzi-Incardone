@@ -3,8 +3,9 @@ import torchaudio
 import os
 from torch.utils.data import Dataset
 import torchaudio.transforms as transforms
+import torch.nn.functional as F
 
-class EMOVODataset(Dataset):
+class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
     LABEL_DICT = {
         'dis': 0,
         'gio': 1,
@@ -49,6 +50,13 @@ class EMOVODataset(Dataset):
                             # Aggiunge l'etichetta numerica corrispondente alla lista self.labels
                             self.labels.append(EMOVODataset.LABEL_DICT[label])
 
+        SAMPLE_RATE = 48000
+        misalignment = self.max_sample_len % SAMPLE_RATE
+        if misalignment != 0:
+            padding = SAMPLE_RATE - misalignment
+            self.max_sample_len += padding
+
+        self.max_sample_len -= 1
 
     def extract_label(self, file_name: str) -> str:
         """ Estrae la parte del nome del file che contiene la label poichè i nomi dei file sono in questo formato 'dis-f1-b1.wav'
@@ -60,17 +68,15 @@ class EMOVODataset(Dataset):
     def __len__(self) -> int:
         return len(self.audio_files)
 
-    def __getitem__(self, idx: int):
-        """ 
-        
+    def __getitem__(self, idx: int) -> dict[str, torch.Tensor | int]:
+        """
         Returns:
-
             dict:
-                "waveform" (tensor): un sample del dataset
+                "waveform" (torch.Tensor): un sample del dataset
                 "sample_rate" (int): il target sample rate utilizzato nel modello
                 "label" (int): una label del dataset
-        
         """
+
         audio_path = self.audio_files[idx]
         label = self.labels[idx]
 
@@ -79,7 +85,7 @@ class EMOVODataset(Dataset):
 
         # Resampling
         if self.resample and sample_rate != EMOVODataset.TARGET_SAMPLE_RATE:
-            resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=EMOVODataset.TARGET_SAMPLE_RATE)
+            resampler = transforms.Resample(orig_freq=sample_rate, new_freq=EMOVODataset.TARGET_SAMPLE_RATE)
             waveform = resampler(waveform)
             sample_rate = EMOVODataset.TARGET_SAMPLE_RATE
 
@@ -87,10 +93,10 @@ class EMOVODataset(Dataset):
         waveform_sample_len = waveform.shape[1]
         if waveform_sample_len < self.max_sample_len:
             padding = self.max_sample_len - waveform_sample_len
-            waveform = torch.nn.functional.pad(waveform, (1, padding))
+            waveform = F.pad(waveform, (1, padding))
 
         return {
-            "waveform": waveform, 
-            "sample_rate": sample_rate, 
+            "waveform": waveform,
+            "sample_rate": sample_rate,
             "label": label
         }
