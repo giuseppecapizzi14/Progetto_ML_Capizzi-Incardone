@@ -1,5 +1,4 @@
 data:
-  dataset: emovo
   train_ratio: 0.9
   data_dir: dataset
 

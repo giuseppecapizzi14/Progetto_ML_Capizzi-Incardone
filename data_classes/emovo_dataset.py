@@ -5,17 +5,16 @@ from torch.utils.data import Dataset
 import torchaudio.transforms as transforms
 
 class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
-
-    label_dict = {
-    'dis': 0,
-    'gio': 1,
-    'pau': 2,
-    'rab': 3,
-    'sor': 4,
-    'tri': 5,
-    'neu': 6
+    LABEL_DICT = {
+        'dis': 0,
+        'gio': 1,
+        'pau': 2,
+        'rab': 3,
+        'sor': 4,
+        'tri': 5,
+        'neu': 6
     }
-       
+
     def __init__(self, data_path: str, train: bool = True, resample: bool = True):
         self.data_path = data_path
         self.train = train
@@ -23,6 +22,7 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
         self.audio_files: list[str] = []
         self.labels: list[int] = []
         self.resample = resample
+        self.max_sample_len = 0
 
         # Scansione della directory degli attori
         for actor_dir in os.listdir(data_path):
@@ -33,11 +33,20 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
                     if file_name.endswith('.wav'):
                         # Estrae l'etichetta dal nome del file usando la funzione extract_label
                         label = self.extract_label(file_name)
-                        if label in EMOVODataset.label_dict:
+                        if label in EMOVODataset.LABEL_DICT:
+                            audio_path = os.path.join(actor_path, file_name)
+
+                            # Trova la traccia audio con la dimensione massima
+                            waveform, _sample_rate = torchaudio.load(audio_path) # type: ignore
+                            waveform_sample_len = waveform.shape[1]
+                            if waveform_sample_len > self.max_sample_len:
+                                self.max_sample_len = waveform_sample_len
+
                             # Aggiunge il percorso completo del file audio alla lista self.audio_files
-                            self.audio_files.append(os.path.join(actor_path, file_name))
+                            self.audio_files.append(audio_path)
                             # Aggiunge l'etichetta numerica corrispondente alla lista self.labels
-                            self.labels.append(EMOVODataset.label_dict[label])
+                            self.labels.append(EMOVODataset.LABEL_DICT[label])
+
 
     def extract_label(self, file_name: str) -> str:
         ''' Estrae la parte del nome del file che contiene la label poichè i nomi dei file sono in questo formato 'dis-f1-b1.wav'
@@ -53,7 +62,7 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
         label = self.labels[idx]
 
         # Carica il file audio
-        waveform, sample_rate = torchaudio.load(audio_path)
+        waveform, sample_rate = torchaudio.load(audio_path) # type: ignore
 
         # Resampling
         if self.resample:
@@ -61,5 +70,11 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
                 resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
                 waveform = resampler(waveform)
                 sample_rate = 16000
+
+        # Uniforma la lunghezza di tutti gli audio alla lunghezza massima, aggiungendo padding (silenzio)
+        waveform_sample_len = waveform.shape[1]
+        if waveform_sample_len < self.max_sample_len:
+            padding = self.max_sample_len - waveform_sample_len
+            waveform = torch.nn.functional.pad(waveform, (0, padding))
 
         return waveform, sample_rate, label
