@@ -6,7 +6,7 @@ class CNN(nn.Module):
     def __init__(
         self,
         num_classes: int,
-        dropout: float = 0.2
+        dropout: float
     ):
         
         super(CNN, self).__init__()
@@ -31,8 +31,7 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear(in_features = 128, out_features = num_classes)
 
         # Dropout per ridurre l'overfitting
-        self.dropout = nn.Dropout(0.5)
-        # Probabilità di dropout: 0.5 (50% di dropout durante l'addestramento)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         # Passaggio attraverso il primo strato convoluzionale seguito da attivazione ReLU e max pooling
