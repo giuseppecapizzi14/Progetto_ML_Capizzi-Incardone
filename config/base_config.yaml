@@ -5,3 +5,16 @@ data:
 model:
   num_classes: 7
   dropout: 0.2
+
+training:
+  epochs: 10
+  batch_size: 32
+  learning_rate: 0.001
+  optimizer: adam
+  lr: 0.001
+  warmup_ratio: 0.1
+  validation_split: 0.2
+  checkpoint_dir: checkpoints/
+  device: cuda
+  evaluation_metric: accuracy
+  best_metric_lower_is_better: false
