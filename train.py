@@ -18,8 +18,8 @@ def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device):
     references = []
     
     for i, batch in enumerate(tqdm(dataloader, desc="Training")):
-        waveform = batch[0].to(device)
-        labels = batch[2].to(device)
+        waveform = batch['waveform'].to(device)
+        labels = batch['label'].to(device)
         
         optimizer.zero_grad()
         
@@ -95,7 +95,7 @@ if __name__ == '__main__':
 
 
     # Carica il modello
-    model = CNN(num_classes= len(EMOVODataset.LABEL_DICT, config.model.dropout))
+    model = CNN(num_classes=len(EMOVODataset.LABEL_DICT), dropout=config.model.dropout)
 
     # Carica il device da utilizzare tra CUDA, MPS e CPU
     if config.training.devide == "cuda" and torch.cuda.is_available():
@@ -117,7 +117,49 @@ if __name__ == '__main__':
     # Definisce un optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config.training.lr)
 
+    # learning rate scheduler
+    total_steps = len(train_dl) * config.training.epochs
+    warmup_steps = int(total_steps * config.training.warmup_ratio)
+    # warmup + linear decay
+    scheduler_lambda = lambda step: (step / warmup_steps) if step < warmup_steps else max(0.0, (total_steps - step) / (total_steps - warmup_steps))
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=scheduler_lambda)
     
+    if config.training.best_metric_lower_is_better:
+        best_val_metric = float('inf')
+    else:
+        best_val_metric = float('-inf')
+        
+    best_model = None
+    
+    # Addestra il modello
+    for epoch in range(config.training.epochs):
+        print(f"Epoch {epoch+1}/{config.training.epochs}")
+        
+        train_metrics = train_one_epoch(model, train_dl, criterion, optimizer, scheduler, device)
+        val_metrics = evaluate(model, val_dl, criterion, device)
+        
+        print(f"Train loss: {train_metrics['loss']:.4f} - Train accuracy: {train_metrics['accuracy']:.4f}")
+        print(f"Val loss: {val_metrics['loss']:.4f} - Val accuracy: {val_metrics['accuracy']:.4f}")
+        
+        best_val_metric, best_model = manage_best_model_and_metrics(
+            model, 
+            config.training.evaluation_metric, 
+            val_metrics, 
+            best_val_metric, 
+            best_model, 
+            config.training.best_metric_lower_is_better
+        )
+        
+   # Valuta le metriche del modello 
+    test_metrics = evaluate(best_model, test_dl, criterion, device)
+    for key, value in test_metrics.items():
+        print(f"Test {key}: {value:.4f}")
+        
+    # Salva il modello
+    os.makedirs(config.training.checkpoint_dir, exist_ok=True)
+    torch.save(best_model.state_dict(), f"{config.training.checkpoint_dir}/best_model.pt")
+    
+    print("Model saved.")
 
 
 
