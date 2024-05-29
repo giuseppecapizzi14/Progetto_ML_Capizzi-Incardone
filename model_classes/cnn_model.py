@@ -24,8 +24,8 @@ class CNN(nn.Module):
         self.pool = nn.MaxPool1d(kernel_size = 2, stride = 2)
 
         # Primo strato completamente connesso
-        self.fc1 = nn.Linear(in_features = 64 * 4000, out_features = 128)
-        # Numero di unità in input: 64 * 4000 (64 canali * lunghezza del segnale dopo il pooling)
+        self.fc1 = nn.Linear(in_features = 64 * 5600, out_features = 128)
+        # Numero di unità in input: 64 * 5600 (64 canali * lunghezza del segnale dopo il pooling)
 
         # Secondo strato completamente connesso (output)
         self.fc2 = nn.Linear(in_features = 128, out_features = num_classes)
