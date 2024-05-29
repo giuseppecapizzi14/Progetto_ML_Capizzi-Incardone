@@ -1,13 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.functional as F
 
 class CNN(nn.Module):
-    def __init__(
-        self,
-        num_classes: int,
-        dropout: float
-    ):
+    def __init__(self, num_classes: int, dropout: float):
         super(CNN, self).__init__()
 
         # Primo strato convoluzionale
