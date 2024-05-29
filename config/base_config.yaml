@@ -2,3 +2,9 @@ data:
   dataset: emovo
   train_ratio: 0.9
   data_dir: /Users/giuseppecapizzi/Desktop/Magistrale/Machine_Learning/EMOVO
+  padding:
+
+
+model:
+  num_classes: 7
+  dropout: 0.2
