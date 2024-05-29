@@ -15,6 +15,8 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
         'neu': 6
     }
 
+    TARGET_SAMPLE_RATE = 16_000
+
     def __init__(self, data_path: str, train: bool = True, resample: bool = True):
         self.data_path = data_path
         self.train = train
@@ -49,8 +51,9 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
 
 
     def extract_label(self, file_name: str) -> str:
-        ''' Estrae la parte del nome del file che contiene la label poichè i nomi dei file sono in questo formato 'dis-f1-b1.wav'
-        con la label key messa al primo posto '''
+        """ Estrae la parte del nome del file che contiene la label poichè i nomi dei file sono in questo formato 'dis-f1-b1.wav'
+        con la label key messa al primo posto """
+
         label = file_name.split('-')[0]
         return label
 
@@ -65,16 +68,15 @@ class EMOVODataset(Dataset[tuple[torch.Tensor, float, int]]):
         waveform, sample_rate = torchaudio.load(audio_path) # type: ignore
 
         # Resampling
-        if self.resample:
-            if sample_rate != 16000:
-                resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-                waveform = resampler(waveform)
-                sample_rate = 16000
+        if self.resample and sample_rate != EMOVODataset.TARGET_SAMPLE_RATE:
+            resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=EMOVODataset.TARGET_SAMPLE_RATE)
+            waveform = resampler(waveform)
+            sample_rate = EMOVODataset.TARGET_SAMPLE_RATE
 
         # Uniforma la lunghezza di tutti gli audio alla lunghezza massima, aggiungendo padding (silenzio)
         waveform_sample_len = waveform.shape[1]
         if waveform_sample_len < self.max_sample_len:
             padding = self.max_sample_len - waveform_sample_len
-            waveform = torch.nn.functional.pad(waveform, (0, padding))
+            waveform = torch.nn.functional.pad(waveform, (1, padding))
 
         return waveform, sample_rate, label
