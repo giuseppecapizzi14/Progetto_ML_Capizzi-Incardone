@@ -3,7 +3,6 @@ data:
   data_dir: dataset
 
 model:
-  num_classes: 7
   dropout: 0.2
 
 training:

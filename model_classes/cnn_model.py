@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class CNN(nn.Module):
-    SAMPLE_LEN_AFTER_POOLING = 5600
+    SAMPLE_LEN_AFTER_POOLING = 5599
 
     def __init__(self, num_classes: int, dropout: float):
         super(CNN, self).__init__()
@@ -14,14 +14,14 @@ class CNN(nn.Module):
         self.conv2 = nn.Conv1d(in_channels = 16, out_channels = 32, kernel_size = 3, stride = 2)
 
         # Terzo strato convoluzionale
-        self.conv3 = nn.Conv1d(in_channels = 32, out_channels = 64, kernel_size = 2, stride = 2)
+        self.conv3 = nn.Conv1d(in_channels = 32, out_channels = 64, kernel_size = 3, stride = 2)
 
         # Max pooling
-        self.pool = nn.MaxPool1d(kernel_size = 2, stride = 2)
+        self.pool = nn.MaxPool1d(kernel_size = 3, stride = 2)
 
         # Primo strato completamente connesso
         self.fc1 = nn.Linear(in_features = 64 * CNN.SAMPLE_LEN_AFTER_POOLING, out_features = 128)
-        # Numero di unità in input: 64 * 5600 (64 canali * lunghezza del segnale dopo il pooling)
+        # Numero di unità in input: 64 * 5599 (64 canali * lunghezza del segnale dopo il pooling)
 
         # Secondo strato completamente connesso (output)
         self.fc2 = nn.Linear(in_features = 128, out_features = num_classes)
