@@ -21,7 +21,6 @@ class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
     def __init__(self, data_path: str, train: bool = True, resample: bool = True):
         self.data_path = data_path
         self.train = train
-        self.download = True
         self.audio_files: list[str] = []
         self.labels: list[int] = []
         self.resample = resample
@@ -48,11 +47,9 @@ class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
                 if waveform_sample_len > self.max_sample_len:
                     self.max_sample_len = waveform_sample_len
 
-                # Aggiunge il percorso completo del file audio alla lista self.audio_files
+                # Registriamo il percorso del file audio e la sua etichetta corrispondente
                 self.audio_files.append(audio_path)
-                # Aggiunge l'etichetta numerica corrispondente alla lista self.labels
                 self.labels.append(EMOVODataset.LABEL_DICT[label])
-
         # Arrotondo i sample per eccesso a una durate di n secondi
         SAMPLE_RATE = 48000
         misalignment = self.max_sample_len % SAMPLE_RATE
@@ -80,7 +77,6 @@ class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
         audio_path = self.audio_files[idx]
         label = self.labels[idx]
 
-        # Carica il file audio
         waveform, sample_rate = torchaudio.load(audio_path) # type: ignore
 
         # Uniforma la lunghezza di tutti gli audio alla lunghezza massima, aggiungendo padding (silenzio)
