@@ -7,3 +7,5 @@ example.py
 __pycache__
 
 .vscode
+
+checkpoints

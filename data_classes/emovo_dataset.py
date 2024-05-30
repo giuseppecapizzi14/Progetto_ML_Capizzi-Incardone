@@ -17,6 +17,7 @@ class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
     }
 
     TARGET_SAMPLE_RATE = 16_000
+    EXPECTED_CHANNELS = 2
 
     def __init__(self, data_path: str, train: bool = True, resample: bool = True):
         self.data_path = data_path
@@ -25,6 +26,8 @@ class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
         self.labels: list[int] = []
         self.resample = resample
         self.max_sample_len = 0
+
+        EXPECTED_SAMPLE_RATE = 48000
 
         # Scansione della directory degli attori
         for dir_path, _dir_names, file_names in os.walk(data_path):
@@ -41,8 +44,9 @@ class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
 
                 audio_path = os.path.join(dir_path, file_name)
 
-                # Trova la traccia audio con la dimensione massima
                 waveform, _sample_rate = torchaudio.load(audio_path) # type: ignore
+
+                # Registriamo la traccia audio con la dimensione massima
                 waveform_sample_len = waveform.shape[1]
                 if waveform_sample_len > self.max_sample_len:
                     self.max_sample_len = waveform_sample_len
@@ -52,15 +56,14 @@ class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
                 self.labels.append(EmovoDataset.LABEL_DICT[label])
 
         # Arrotondo i sample per eccesso a una durate di n secondi
-        SAMPLE_RATE = 48000
-        misalignment = self.max_sample_len % SAMPLE_RATE
+        misalignment = self.max_sample_len % EXPECTED_SAMPLE_RATE
         if misalignment != 0:
-            padding = SAMPLE_RATE - misalignment
+            padding = EXPECTED_SAMPLE_RATE - misalignment
             self.max_sample_len += padding
 
         # Porto il max_sample_len ad utilizzare il nuovo sample rate
         if resample:
-            SAMPLE_RATE_RATIO = int(SAMPLE_RATE // EmovoDataset.TARGET_SAMPLE_RATE)
+            SAMPLE_RATE_RATIO = int(EXPECTED_SAMPLE_RATE // EmovoDataset.TARGET_SAMPLE_RATE)
             self.max_sample_len //= SAMPLE_RATE_RATIO
 
     def __len__(self) -> int:
@@ -85,6 +88,12 @@ class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
             resampler = transforms.Resample(orig_freq=sample_rate, new_freq=EmovoDataset.TARGET_SAMPLE_RATE)
             waveform = resampler(waveform)
             sample_rate = EmovoDataset.TARGET_SAMPLE_RATE
+
+        # Controlliamo che le traccie siano tutte in modalità stereo (canale destro e sinistro)
+        current_waveform_channels = waveform.shape[0]
+        if current_waveform_channels != EmovoDataset.EXPECTED_CHANNELS:
+            # Se le traccie non sono in modalità stereo duplichiamo il singolo canale esistente
+            waveform = waveform.repeat(2, 1)
 
         # Uniforma la lunghezza di tutti gli audio alla lunghezza massima, aggiungendo padding (silenzio)
         waveform_sample_len = waveform.shape[1]

@@ -67,8 +67,9 @@ if __name__ == "__main__":
     elif config.training.device == "mps" and torch.backends.mps.is_available():
         device = torch.device("mps")
     else:
-        print("Device not available. Using CPU!")
         device = torch.device("cpu")
+
+    print(f"Device: {device}")
 
     # Carica il modello
     model = EmovoCNN(waveform_size = train_dataset.max_sample_len, num_classes = len(EmovoDataset.LABEL_DICT), dropout = config.model.dropout, device = device)
@@ -102,6 +103,7 @@ if __name__ == "__main__":
     print(f"Train size: {len(train_dataset)}")
     print(f"Validation size: {len(val_dataset)}")
     print(f"Test size: {len(test_dataset)}")
+    print()
 
     # Definisce una funzione di loss
     criterion = nn.CrossEntropyLoss()
@@ -141,14 +143,16 @@ if __name__ == "__main__":
             best_model,
             config.training.best_metric_lower_is_better
         )
+        print()
 
-   # Valuta le metriche del modello
+    # Valuta le metriche del modello
     test_metrics = evaluate(best_model, test_dl, criterion, device)
     for key, value in test_metrics.items():
         print(f"Test {key}: {value:.4f}")
 
-    # Salva il modello
-    os.makedirs(config.training.checkpoint_dir, exist_ok=True)
-    torch.save(best_model.state_dict(), f"{config.training.checkpoint_dir}/best_model.pt")
+    # Non salviamo per il momento visto che non è implementata la funzione di caricamento
+    # # Salva il modello
+    # os.makedirs(config.training.checkpoint_dir, exist_ok=True)
+    # torch.save(best_model.state_dict(), f"{config.training.checkpoint_dir}/best_model.pt")
 
-    print("Model saved.")
+    # print("Model saved.")
