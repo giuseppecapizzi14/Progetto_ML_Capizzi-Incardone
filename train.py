@@ -42,7 +42,7 @@ def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device):
 
 def manage_best_model_and_metrics(model, evaluation_metric, val_metrics, best_val_metric, best_model, lower_is_better):
     if lower_is_better:
-        is_best = val_metrics[evaluation_metric] < best_val_metric
+        is_best = val_metrics[evaluation_metric] <= best_val_metric
     else:
         is_best = val_metrics[evaluation_metric] > best_val_metric
 
