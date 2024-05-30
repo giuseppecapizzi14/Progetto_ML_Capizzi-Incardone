@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 import torchaudio.transforms as transforms
 import torch.nn.functional as F
 
-class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
+class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
     LABEL_DICT = {
         "dis": 0,
         "gio": 1,
@@ -36,7 +36,7 @@ class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
                 # Estrae la parte del nome del file che contiene la label poichè i nomi dei file
                 # sono nel formato 'dis-f1-b1.wav' con la label key messa al primo posto
                 label = file_name.split('-')[0]
-                if label not in EMOVODataset.LABEL_DICT:
+                if label not in EmovoDataset.LABEL_DICT:
                     continue
 
                 audio_path = os.path.join(dir_path, file_name)
@@ -49,7 +49,7 @@ class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
 
                 # Registriamo il percorso del file audio e la sua etichetta corrispondente
                 self.audio_files.append(audio_path)
-                self.labels.append(EMOVODataset.LABEL_DICT[label])
+                self.labels.append(EmovoDataset.LABEL_DICT[label])
 
         # Arrotondo i sample per eccesso a una durate di n secondi
         SAMPLE_RATE = 48000
@@ -60,7 +60,7 @@ class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
 
         # Porto il max_sample_len ad utilizzare il nuovo sample rate
         if resample:
-            SAMPLE_RATE_RATIO = int(SAMPLE_RATE // EMOVODataset.TARGET_SAMPLE_RATE)
+            SAMPLE_RATE_RATIO = int(SAMPLE_RATE // EmovoDataset.TARGET_SAMPLE_RATE)
             self.max_sample_len //= SAMPLE_RATE_RATIO
 
     def __len__(self) -> int:
@@ -81,10 +81,10 @@ class EMOVODataset(Dataset[dict[str, torch.Tensor | int]]):
         waveform, sample_rate = torchaudio.load(audio_path) # type: ignore
 
         # Resampling
-        if self.resample and sample_rate != EMOVODataset.TARGET_SAMPLE_RATE:
-            resampler = transforms.Resample(orig_freq=sample_rate, new_freq=EMOVODataset.TARGET_SAMPLE_RATE)
+        if self.resample and sample_rate != EmovoDataset.TARGET_SAMPLE_RATE:
+            resampler = transforms.Resample(orig_freq=sample_rate, new_freq=EmovoDataset.TARGET_SAMPLE_RATE)
             waveform = resampler(waveform)
-            sample_rate = EMOVODataset.TARGET_SAMPLE_RATE
+            sample_rate = EmovoDataset.TARGET_SAMPLE_RATE
 
         # Uniforma la lunghezza di tutti gli audio alla lunghezza massima, aggiungendo padding (silenzio)
         waveform_sample_len = waveform.shape[1]

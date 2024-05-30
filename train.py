@@ -7,8 +7,8 @@ from tqdm import tqdm
 from metrics import compute_metrics, evaluate
 from yaml_config_override import add_arguments
 from addict import Dict
-from data_classes.emovo_dataset import EMOVODataset
-from model_classes.cnn_model import CNN
+from data_classes.emovo_dataset import EmovoDataset
+from model_classes.cnn_model import EmovoCNN
 
 
 def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device):
@@ -58,8 +58,20 @@ if __name__ == "__main__":
     config = Dict(add_arguments())
 
     # Caricamento Dataset
-    train_dataset = EMOVODataset(config.data.data_dir, train=True, resample=True)
-    test_dataset = EMOVODataset(config.data.data_dir, train=False, resample=True)
+    train_dataset = EmovoDataset(config.data.data_dir, train=True, resample=True)
+    test_dataset = EmovoDataset(config.data.data_dir, train=False, resample=True)
+
+    # Carica il device da utilizzare tra CUDA, MPS e CPU
+    if config.training.devide == "cuda" and torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif config.training.device == "mps" and torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        print("Device not available. Using CPU!")
+        device = torch.device("cpu")
+
+    # Carica il modello
+    model = EmovoCNN(waveform_size = train_dataset.max_sample_len, num_classes = len(EmovoDataset.LABEL_DICT), dropout = config.model.dropout, device = device)
 
     # Calcola le dimensioni del Set di Train e del Set di Validation
     train_size = int(config.data.train_ratio * len(train_dataset))
@@ -90,24 +102,6 @@ if __name__ == "__main__":
     print(f"Train size: {len(train_dataset)}")
     print(f"Validation size: {len(val_dataset)}")
     print(f"Test size: {len(test_dataset)}")
-
-
-    # Carica il modello
-    model = CNN(num_classes=len(EMOVODataset.LABEL_DICT), dropout=config.model.dropout)
-
-    # Carica il device da utilizzare tra CUDA, MPS e CPU
-    if config.training.devide == "cuda" and torch.cuda.is_available():
-        device = torch.device("cuda")
-
-    elif config.training.device == "mps" and torch.backends.mps.is_available():
-        device = torch.device("mps")
-
-    else:
-        print("Device not available. Using CPU!")
-        device = torch.device("cpu")
-
-    model.to(device)
-
 
     # Definisce una funzione di loss
     criterion = nn.CrossEntropyLoss()
