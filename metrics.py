@@ -22,7 +22,7 @@ def evaluate(model, dataloader, criterion, device):
     references = []
 
     with torch.no_grad():
-        for batch in enumerate(tqdm(dataloader, desc="Evaluate")):
+        for _i, batch in enumerate(tqdm(dataloader, desc="Evaluate")):
             waveform = batch["waveform"].to(device)
             labels = batch["label"].to(device)
 

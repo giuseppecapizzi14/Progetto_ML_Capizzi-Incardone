@@ -53,7 +53,6 @@ def manage_best_model_and_metrics(model, evaluation_metric, val_metrics, best_va
 
     return best_val_metric, best_model
 
-
 if __name__ == "__main__":
     # Legge il file di configurazione
     config = Dict(add_arguments())
@@ -128,7 +127,7 @@ if __name__ == "__main__":
     else:
         best_val_metric = float("-inf")
 
-    best_model = None
+    best_model = model
 
     # Addestra il modello
     for epoch in range(config.training.epochs):
