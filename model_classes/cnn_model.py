@@ -51,8 +51,8 @@ import torch.nn as nn
 class CNN(nn.Module):
     SAMPLE_LEN_AFTER_POOLING = 5599
 
-    def _init_(self, num_classes: int, dropout: float):
-        super(CNN, self)._init_()
+    def __init__(self, num_classes: int, dropout: float):
+        super(CNN, self).__init__()
 
         # Primo strato convoluzionale
         self.conv1 = nn.Conv1d(in_channels = 2, out_channels = 16, kernel_size = 10, stride = 5)
@@ -78,30 +78,30 @@ class CNN(nn.Module):
         # Dropout per ridurre l'overfitting
         self.dropout = nn.Dropout(dropout)
 
-        def forward(self, x: torch.Tensor):
-            x = self.conv1(x)
-            x = self.relu(x)
-            # Passaggio attraverso il primo strato convoluzionale seguito da attivazione ReLU e max pooling
-            x = self.pool(x)
+    def forward(self, x: torch.Tensor):
+        # Passaggio attraverso il primo strato convoluzionale seguito da attivazione ReLU e max pooling
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.pool(x)
 
-            x = self.conv2(x)
-            x = self.relu(x)
-            # Passaggio attraverso il secondo strato convoluzionale seguito da attivazione ReLU e max pooling
-            x = self.pool(x)
+        # Passaggio attraverso il secondo strato convoluzionale seguito da attivazione ReLU e max pooling
+        x = self.conv2(x)
+        x = self.relu(x)
+        x = self.pool(x)
 
-            x = self.conv3(x)
-            x = self.relu(x)
-            # Passaggio attraverso il terzo strato convoluzionale seguito da attivazione ReLU e max pooling
-            x = self.pool(x)
+        # Passaggio attraverso il terzo strato convoluzionale seguito da attivazione ReLU e max pooling
+        x = self.conv3(x)
+        x = self.relu(x)
+        x = self.pool(x)
 
-            # Riformatta l'output per il passaggio attraverso i layer completamente connessi
-            x = x.view(-1, 64 * CNN.SAMPLE_LEN_AFTER_POOLING)
+        # Riformatta l'output per il passaggio attraverso i layer completamente connessi
+        x = x.view(-1, 64 * CNN.SAMPLE_LEN_AFTER_POOLING)
 
-            # Passaggio attraverso il primo strato completamente connesso seguito da attivazione ReLU e dropout
-            x = self.fc1(x)
-            x = self.relu(x)
-            x = self.dropout(x)
+        # Passaggio attraverso il primo strato completamente connesso seguito da attivazione ReLU e dropout
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.dropout(x)
 
-            # Passaggio attraverso il secondo strato completamente connesso (output)
-            x = self.fc2(x)
-            return x
+        # Passaggio attraverso il secondo strato completamente connesso (output)
+        x = self.fc2(x)
+        return x

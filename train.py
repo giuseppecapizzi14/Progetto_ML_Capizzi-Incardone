@@ -16,28 +16,28 @@ def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device):
     running_loss = 0.0
     predictions = []
     references = []
-    
-    for i, batch in enumerate(tqdm(dataloader, desc="Training")):
-        waveform = batch['waveform'].to(device)
-        labels = batch['label'].to(device)
-        
+
+    for _i, batch in enumerate(tqdm(dataloader, desc="Training")):
+        waveform = batch["waveform"].to(device)
+        labels = batch["label"].to(device)
+
         optimizer.zero_grad()
-        
+
         outputs = model(waveform)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
         scheduler.step()
-        
+
         running_loss += loss.item()
-        
+
         pred = torch.argmax(outputs, dim=1)
         predictions.extend(pred.cpu().numpy())
         references.extend(labels.cpu().numpy())
-        
+
     train_metrics = compute_metrics(predictions, references)
-    train_metrics['loss'] = running_loss / len(dataloader)
-    
+    train_metrics["loss"] = running_loss / len(dataloader)
+
     return train_metrics
 
 def manage_best_model_and_metrics(model, evaluation_metric, val_metrics, best_val_metric, best_model, lower_is_better):
@@ -45,23 +45,22 @@ def manage_best_model_and_metrics(model, evaluation_metric, val_metrics, best_va
         is_best = val_metrics[evaluation_metric] < best_val_metric
     else:
         is_best = val_metrics[evaluation_metric] > best_val_metric
-        
+
     if is_best:
         print(f"New best model found with val {evaluation_metric}: {val_metrics[evaluation_metric]:.4f}")
         best_val_metric = val_metrics[evaluation_metric]
         best_model = model
-        
+
     return best_val_metric, best_model
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # Legge il file di configurazione
     config = Dict(add_arguments())
 
     # Caricamento Dataset
     train_dataset = EMOVODataset(config.data.data_dir, train=True, resample=True)
-    test_dataset = EMOVODataset(config.data.data_dir, train=True, resample=True)
+    test_dataset = EMOVODataset(config.data.data_dir, train=False, resample=True)
 
     # Calcola le dimensioni del Set di Train e del Set di Validation
     train_size = int(config.data.train_ratio * len(train_dataset))
@@ -73,14 +72,14 @@ if __name__ == '__main__':
         batch_size=config.training.batch_size,
         shuffle=True
     )
-    
+
     # Crea il DataLoader di Validation
     val_dl = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=config.training.batch_size,
         shuffle=False
     )
-    
+
     # Crea il DataLoader di Test
     test_dl = torch.utils.data.DataLoader(
         test_dataset,
@@ -123,43 +122,40 @@ if __name__ == '__main__':
     # warmup + linear decay
     scheduler_lambda = lambda step: (step / warmup_steps) if step < warmup_steps else max(0.0, (total_steps - step) / (total_steps - warmup_steps))
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=scheduler_lambda)
-    
+
     if config.training.best_metric_lower_is_better:
-        best_val_metric = float('inf')
+        best_val_metric = float("inf")
     else:
-        best_val_metric = float('-inf')
-        
+        best_val_metric = float("-inf")
+
     best_model = None
-    
+
     # Addestra il modello
     for epoch in range(config.training.epochs):
         print(f"Epoch {epoch+1}/{config.training.epochs}")
-        
+
         train_metrics = train_one_epoch(model, train_dl, criterion, optimizer, scheduler, device)
         val_metrics = evaluate(model, val_dl, criterion, device)
-        
+
         print(f"Train loss: {train_metrics['loss']:.4f} - Train accuracy: {train_metrics['accuracy']:.4f}")
         print(f"Val loss: {val_metrics['loss']:.4f} - Val accuracy: {val_metrics['accuracy']:.4f}")
-        
+
         best_val_metric, best_model = manage_best_model_and_metrics(
-            model, 
-            config.training.evaluation_metric, 
-            val_metrics, 
-            best_val_metric, 
-            best_model, 
+            model,
+            config.training.evaluation_metric,
+            val_metrics,
+            best_val_metric,
+            best_model,
             config.training.best_metric_lower_is_better
         )
-        
-   # Valuta le metriche del modello 
+
+   # Valuta le metriche del modello
     test_metrics = evaluate(best_model, test_dl, criterion, device)
     for key, value in test_metrics.items():
         print(f"Test {key}: {value:.4f}")
-        
+
     # Salva il modello
     os.makedirs(config.training.checkpoint_dir, exist_ok=True)
     torch.save(best_model.state_dict(), f"{config.training.checkpoint_dir}/best_model.pt")
-    
+
     print("Model saved.")
-
-
-
