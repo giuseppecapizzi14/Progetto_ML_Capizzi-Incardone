@@ -1,4 +1,3 @@
-import os
 import torch
 import torch.nn as nn
 import torch.utils
@@ -9,7 +8,6 @@ from yaml_config_override import add_arguments
 from addict import Dict
 from data_classes.emovo_dataset import EmovoDataset
 from model_classes.cnn_model import EmovoCNN
-
 
 def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device):
     model.train()
@@ -62,7 +60,7 @@ if __name__ == "__main__":
     test_dataset = EmovoDataset(config.data.data_dir, train=False, resample=True)
 
     # Carica il device da utilizzare tra CUDA, MPS e CPU
-    if config.training.devide == "cuda" and torch.cuda.is_available():
+    if config.training.device == "cuda" and torch.cuda.is_available():
         device = torch.device("cuda")
     elif config.training.device == "mps" and torch.backends.mps.is_available():
         device = torch.device("mps")
