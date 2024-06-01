@@ -2,7 +2,7 @@ import torch
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-def compute_metrics(references, predictions):
+def compute_metrics(references, predictions, running_loss, dataset_len):
     accuracy = accuracy_score(references, predictions)
     precision = precision_score(references, predictions, average="macro")
     recall = recall_score(references, predictions, average="macro")
@@ -12,7 +12,8 @@ def compute_metrics(references, predictions):
         "accuracy": accuracy,
         "precision": precision,
         "recall": recall,
-        "f1": f1
+        "f1": f1,
+        "loss": running_loss / dataset_len
     }
 
 def evaluate(model, dataloader, criterion, device):
@@ -35,7 +36,4 @@ def evaluate(model, dataloader, criterion, device):
             predictions.extend(pred.cpu().numpy())
             references.extend(labels.cpu().numpy())
 
-    val_metrics = compute_metrics(references, predictions)
-    val_metrics["loss"] = running_loss / len(dataloader)
-
-    return val_metrics
+    return compute_metrics(references, predictions, running_loss, len(dataloader))

@@ -33,10 +33,7 @@ def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device):
         predictions.extend(pred.cpu().numpy())
         references.extend(labels.cpu().numpy())
 
-    train_metrics = compute_metrics(predictions, references)
-    train_metrics["loss"] = running_loss / len(dataloader)
-
-    return train_metrics
+    return compute_metrics(predictions, references, running_loss, len(dataloader))
 
 def manage_best_model_and_metrics(model, evaluation_metric, val_metrics, best_val_metric, best_model, lower_is_better):
     if lower_is_better:

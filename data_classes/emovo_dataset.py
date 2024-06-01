@@ -27,8 +27,6 @@ class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
         self.resample = resample
         self.max_sample_len = 0
 
-        EXPECTED_SAMPLE_RATE = 48000
-
         # Scansione della directory degli attori
         for dir_path, _dir_names, file_names in os.walk(data_path):
             for file_name in file_names:
@@ -54,6 +52,8 @@ class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
                 # Registriamo il percorso del file audio e la sua etichetta corrispondente
                 self.audio_files.append(audio_path)
                 self.labels.append(EmovoDataset.LABEL_DICT[label])
+
+        EXPECTED_SAMPLE_RATE = 48000
 
         # Arrotondo i sample per eccesso a una durate di n secondi
         misalignment = self.max_sample_len % EXPECTED_SAMPLE_RATE
