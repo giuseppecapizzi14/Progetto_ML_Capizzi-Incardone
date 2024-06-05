@@ -8,6 +8,7 @@ from yaml_config_override import add_arguments
 from addict import Dict
 from data_classes.emovo_dataset import EmovoDataset
 from model_classes.cnn_model import EmovoCNN
+import os
 
 def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device):
     model.train()
@@ -68,6 +69,7 @@ if __name__ == "__main__":
 
     # Carica il modello
     model = EmovoCNN(waveform_size = train_dataset.max_sample_len, dropout = config.model.dropout, device = device)
+    model.to(device)
 
     # Calcola le dimensioni del Set di Train e del Set di Validation
     train_size = int(config.data.train_ratio * len(train_dataset))
@@ -145,9 +147,8 @@ if __name__ == "__main__":
     for key, value in test_metrics.items():
         print(f"Test {key}: {value:.4f}")
 
-    # Non salviamo per il momento visto che non è implementata la funzione di caricamento
-    # # Salva il modello
-    # os.makedirs(config.training.checkpoint_dir, exist_ok=True)
-    # torch.save(best_model.state_dict(), f"{config.training.checkpoint_dir}/best_model.pt")
+    # Salva il modello
+    os.makedirs(config.training.checkpoint_dir, exist_ok=True)
+    torch.save(best_model.state_dict(), f"{config.training.checkpoint_dir}/best_model.pt")
 
-    # print("Model saved.")
+    print("Model saved.")
