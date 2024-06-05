@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
 
+from data_classes.emovo_dataset import EmovoDataset
+
 class EmovoCNN(nn.Module):
-    def __init__(self, waveform_size: int, num_classes: int, dropout: float, device: torch.device):
+    def __init__(self, waveform_size: int, dropout: float, device: torch.device):
         def output_size(input_size: int, padding: int, kernel_size: int, stride: int) -> int:
             return (input_size + 2 * padding - kernel_size) // stride + 1
 
@@ -69,7 +71,7 @@ class EmovoCNN(nn.Module):
         )
 
         # Secondo strato completamente connesso (output)
-        self.fc2 = nn.Linear(in_features = 128, out_features = num_classes, device = device)
+        self.fc2 = nn.Linear(in_features = 128, out_features = len(EmovoDataset.LABEL_DICT), device = device)
 
     def forward(self, x: torch.Tensor):
         # Passaggio attraverso gli strati convoluzionali
