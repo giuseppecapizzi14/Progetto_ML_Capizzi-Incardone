@@ -25,20 +25,20 @@ if __name__ == '__main__':
 
     # Load data
     test_dataset = EmovoDataset(config.data.data_dir, train=False, resample=True)
-    
+
     # Crea il DataLoader di Test
     test_dl = torch.utils.data.DataLoader(
         test_dataset,
         batch_size=config.training.batch_size,
         shuffle=False
     )
-    
+
     # Carica il modello
     model = EmovoCNN(waveform_size = test_dataset.max_sample_len, dropout = config.model.dropout, device = device)
     model.to(device)
 
     # Load model weights
-    model.load_state_dict(torch.load(f"{config.training.checkpoint_dir}/best_model.pt"))
+    model.load_state_dict(torch.load(f"{config.training.checkpoint_dir}/{config.training.model_name}.pt"))
     print("Model loaded.")
 
     # Criterion

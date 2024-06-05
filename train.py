@@ -149,6 +149,6 @@ if __name__ == "__main__":
 
     # Salva il modello
     os.makedirs(config.training.checkpoint_dir, exist_ok=True)
-    torch.save(best_model.state_dict(), f"{config.training.checkpoint_dir}/best_model.pt")
+    torch.save(best_model.state_dict(), f"{config.training.checkpoint_dir}/{config.training.model_name}.pt")
 
     print("Model saved.")
