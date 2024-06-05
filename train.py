@@ -67,7 +67,7 @@ if __name__ == "__main__":
     print(f"Device: {device}")
 
     # Carica il modello
-    model = EmovoCNN(waveform_size = train_dataset.max_sample_len, num_classes = len(EmovoDataset.LABEL_DICT), dropout = config.model.dropout, device = device)
+    model = EmovoCNN(waveform_size = train_dataset.max_sample_len, dropout = config.model.dropout, device = device)
 
     # Calcola le dimensioni del Set di Train e del Set di Validation
     train_size = int(config.data.train_ratio * len(train_dataset))
