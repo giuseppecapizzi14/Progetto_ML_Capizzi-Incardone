@@ -6,12 +6,11 @@ model:
   dropout: 0.2
 
 training:
-  epochs: 10
+  epochs: 20
   batch_size: 32
   optimizer: adam
-  lr: 0.001
-  warmup_ratio: 0.1
-  validation_split: 0.2
+  lr: 0.005
+  warmup_ratio: 0.2
   checkpoint_dir: checkpoints/
   model_name: best_model
   device: mps
