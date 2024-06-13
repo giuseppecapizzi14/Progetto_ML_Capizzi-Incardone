@@ -1,10 +1,10 @@
 import torch
-import torch.nn as nn
-import torch.utils
-import torch.utils.data
-from metrics import evaluate
-from yaml_config_override import add_arguments
+from torch.nn import CrossEntropyLoss
+from torch.utils.data import DataLoader
+from yaml_config_override import add_arguments # type: ignore
+
 from data_classes.emovo_dataset import EmovoDataset
+from metrics import evaluate
 from model_classes.cnn_model import EmovoCNN
 
 if __name__ == '__main__':
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     test_dataset = EmovoDataset(config["data"]["data_dir"], train=False, resample=True)
 
     # Crea il DataLoader di Test
-    test_dl = torch.utils.data.DataLoader(
+    test_dl = DataLoader(
         test_dataset,
         batch_size=config["training"]["batch_size"],
         shuffle=False
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     print("Model loaded.")
 
     # Criterion
-    criterion = nn.CrossEntropyLoss()
+    criterion = CrossEntropyLoss()
 
     # Evaluate
     test_metrics = evaluate(model, test_dl, criterion, device)
