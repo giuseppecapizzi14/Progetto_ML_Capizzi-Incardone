@@ -22,9 +22,11 @@ class EmovoCNN(nn.Module):
 
         # Primo strato convoluzionale sequenziale
         self.conv1 = nn.Sequential(
-            nn.Conv1d(in_channels = 2, out_channels = 16, kernel_size = conv1_kernel_size, stride = conv1_stride, device = device),
+            nn.Conv1d(in_channels=2, out_channels=16, kernel_size=conv1_kernel_size, stride=conv1_stride, device=device),
+            nn.BatchNorm1d(16),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size = 3, stride = 2)
+            nn.MaxPool1d(kernel_size=pool1_kernel_size, stride=pool1_stride),
+            nn.Dropout(dropout)
         )
 
         # Secondo strato convoluzionale
@@ -39,9 +41,11 @@ class EmovoCNN(nn.Module):
 
         # Secondo strato convoluzionale sequenziale
         self.conv2 = nn.Sequential(
-            nn.Conv1d(in_channels = 16, out_channels = 32, kernel_size = conv2_kernel_size, stride = conv2_stride, device = device),
+            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=conv2_kernel_size, stride=conv2_stride, device=device),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size = pool2_kernel_size, stride = pool2_stride)
+            nn.MaxPool1d(kernel_size=pool2_kernel_size, stride=pool2_stride),
+            nn.Dropout(dropout)
         )
 
         # Terzo strato convoluzionale
@@ -56,31 +60,53 @@ class EmovoCNN(nn.Module):
 
         # Terzo strato convoluzionale sequenziale
         self.conv3 = nn.Sequential(
-            nn.Conv1d(in_channels = 32, out_channels = 64, kernel_size = conv3_kernel_size, stride = conv3_stride, device = device),
+            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=conv3_kernel_size, stride=conv3_stride, device=device),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size = pool3_kernel_size, stride = pool3_stride)
+            nn.MaxPool1d(kernel_size=pool3_kernel_size, stride=pool3_stride),
+            nn.Dropout(dropout)
+        )
+
+        # Quarto strato convoluzionale
+        conv4_kernel_size = 3
+        conv4_stride = 2
+        self.sample_len = output_size(self.sample_len, 0, conv4_kernel_size, conv4_stride)
+
+        # Quarto strato pooling
+        pool4_kernel_size = 3
+        pool4_stride = 2
+        self.sample_len = output_size(self.sample_len, 0, pool4_kernel_size, pool4_stride)
+
+        # Quarto strato convoluzionale sequenziale
+        self.conv4 = nn.Sequential(
+            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=conv4_kernel_size, stride=conv4_stride, device=device),
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=pool4_kernel_size, stride=pool4_stride),
+            nn.Dropout(dropout)
         )
 
         # Primo strato completamente connesso
         self.fc1 = nn.Sequential(
-            # Numero di unità in input: 64 canali * lunghezza del segnale dopo il pooling
-            nn.Linear(in_features = 64 * self.sample_len, out_features = 128, device = device),
+            # Numero di unità in input: 256 canali * lunghezza del segnale dopo il pooling
+            nn.Linear(in_features=128 * self.sample_len, out_features=128, device=device),
             nn.ReLU(),
             # Dropout per ridurre l'overfitting
             nn.Dropout(dropout)
         )
 
         # Secondo strato completamente connesso (output)
-        self.fc2 = nn.Linear(in_features = 128, out_features = len(EmovoDataset.LABEL_DICT), device = device)
+        self.fc2 = nn.Linear(in_features=128, out_features=len(EmovoDataset.LABEL_DICT), device=device)
 
     def forward(self, x: torch.Tensor):
         # Passaggio attraverso gli strati convoluzionali
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
+        x = self.conv4(x)
 
         # Riformatta l'output per il passaggio attraverso i layer completamente connessi
-        x = x.view(-1, 64 * self.sample_len)
+        x = x.view(-1, 128 * self.sample_len)
 
         # Passaggio attraverso gli strati completamente connessi
         x = self.fc1(x)
