@@ -1,8 +1,5 @@
 torch
-scikit-learn
-pandas
+sklearn
 git+https://github.com/MorenoLaQuatra/yaml_config_override
-addict
 torchaudio
 tqdm
-# PySoundFile

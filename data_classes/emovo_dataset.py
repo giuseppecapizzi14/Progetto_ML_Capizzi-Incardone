@@ -1,3 +1,4 @@
+from typing import TypedDict
 import torch
 import torchaudio
 import os
@@ -5,7 +6,12 @@ from torch.utils.data import Dataset
 import torchaudio.transforms as transforms
 import torch.nn.functional as F
 
-class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
+class Sample(TypedDict):
+    waveform: torch.Tensor
+    sample_rate: int
+    label: int
+
+class EmovoDataset(Dataset[Sample]):
     LABEL_DICT = {
         "dis": 0,
         "gio": 1,
@@ -69,15 +75,7 @@ class EmovoDataset(Dataset[dict[str, torch.Tensor | int]]):
     def __len__(self) -> int:
         return len(self.audio_files)
 
-    def __getitem__(self, idx: int) -> dict[str, torch.Tensor | int]:
-        """
-        Returns:
-            dict:
-                "waveform" (torch.Tensor): un sample del dataset
-                "sample_rate" (int): il target sample rate utilizzato nel modello
-                "label" (int): una label del dataset
-        """
-
+    def __getitem__(self, idx: int) -> Sample:
         audio_path = self.audio_files[idx]
         label = self.labels[idx]
 
