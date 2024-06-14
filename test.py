@@ -7,7 +7,7 @@ from data_classes.emovo_dataset import EmovoDataset
 from metrics import evaluate
 from model_classes.cnn_model import EmovoCNN
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Load configuration
     config = add_arguments()
 

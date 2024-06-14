@@ -27,14 +27,14 @@ if __name__ == "__main__":
     dataloader = DataLoader(dataset, batch_size=config["training"]["batch_size"], shuffle=True)
 
     # Crea un'instanza della funzione di embeddings
-    embeddings_extractor = AudioEmbeddings(model_name='ALM/hubert-base-audioset', device=device)
+    embeddings_extractor = AudioEmbeddings(model_name="ALM/hubert-base-audioset", device=device)
 
     # Iterazione sul dataset per estrarre le embeddings
     embeddings_list = []
     labels_list = []
 
     for sample in dataloader:
-        waveform = sample['waveform'].squeeze(0)
+        waveform = sample["waveform"].squeeze(0)
         # Convert to mono if the waveform is not mono
         if waveform.shape[0] > 1:
             waveform = torch.mean(waveform, dim=0, keepdim=True)
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         waveform = waveform.squeeze(0).numpy()
         embeddings = embeddings_extractor.extract(waveform)
         embeddings_list.append(embeddings)
-        labels_list.extend(sample['label'].squeeze().tolist())
+        labels_list.extend(sample["label"].squeeze().tolist())
 
     # Converti in array numpy
     embeddings_array = np.vstack(embeddings_list)
