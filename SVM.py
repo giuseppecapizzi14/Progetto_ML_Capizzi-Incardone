@@ -36,10 +36,16 @@ if __name__ == "__main__":
     labels_list = []
 
     for sample in dataloader:
-        waveform = sample['waveform'].squeeze(0).numpy()
+        waveform = sample['waveform'].squeeze(0)
+        # Convert to mono if the waveform is not mono
+        if waveform.shape[0] > 1:
+            waveform = torch.mean(waveform, dim=0, keepdim=True)
+        
+        # Ensure waveform is 2D: (batch, length)
+        waveform = waveform.squeeze(0).numpy()
         embeddings = embeddings_extractor.extract(waveform)
         embeddings_list.append(embeddings)
-        labels_list.append(sample['label'].item())
+        labels_list.extend(sample['label'].squeeze().tolist())
 
     # Converti in array numpy
     embeddings_array = np.vstack(embeddings_list)

@@ -1,5 +1,6 @@
 from transformers import AutoFeatureExtractor, AutoModel
 import torch
+from data_classes.emovo_dataset import EmovoDataset
 
 class AudioEmbeddings:
     '''
@@ -31,7 +32,7 @@ class AudioEmbeddings:
             torch.Tensor: Embeddings of the speech.
         '''
         
-        inputs = self.processor(speech, return_tensors="pt", padding="longest")
+        inputs = self.processor(speech, return_tensors="pt", padding="longest", sampling_rate=EmovoDataset.TARGET_SAMPLE_RATE)
         inputs = {name: tensor.to(self.device) for name, tensor in inputs.items()}
         
         with torch.no_grad():
