@@ -43,7 +43,7 @@ def evaluate(
     references: list[int] = []
 
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Evaluate"):
+        for batch in tqdm(dataloader, desc="Evaluating"):
             waveform = batch["waveform"].to(device)
             labels = batch["label"].to(device)
 
