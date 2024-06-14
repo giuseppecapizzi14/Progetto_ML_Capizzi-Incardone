@@ -1,13 +1,15 @@
-from typing import TypedDict
-import torch
-import torchaudio
 import os
-from torch.utils.data import Dataset
-import torchaudio.transforms as transforms
+from typing import TypedDict
+
 import torch.nn.functional as F
+import torchaudio
+from torch import Tensor
+from torch.utils.data import Dataset
+from torchaudio.transforms import Resample
+
 
 class Sample(TypedDict):
-    waveform: torch.Tensor
+    waveform: Tensor
     sample_rate: int
     label: int
 
@@ -83,7 +85,7 @@ class EmovoDataset(Dataset[Sample]):
 
         # Resampling
         if self.resample and sample_rate != EmovoDataset.TARGET_SAMPLE_RATE:
-            resampler = transforms.Resample(orig_freq=sample_rate, new_freq=EmovoDataset.TARGET_SAMPLE_RATE)
+            resampler = Resample(orig_freq=sample_rate, new_freq=EmovoDataset.TARGET_SAMPLE_RATE)
             waveform = resampler(waveform)
             sample_rate = EmovoDataset.TARGET_SAMPLE_RATE
 

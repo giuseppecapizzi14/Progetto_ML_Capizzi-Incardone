@@ -1,20 +1,25 @@
-import torch
-import torch.nn as nn
-import torch.utils
-import torch.utils.data
-from tqdm import tqdm
-from metrics import Metrics, compute_metrics, evaluate
-from yaml_config_override import add_arguments # type: ignore
-from data_classes.emovo_dataset import EmovoDataset, Sample
-from model_classes.cnn_model import EmovoCNN
 import os
 
+import torch.utils.data
+from torch.nn import CrossEntropyLoss, Module
+from torch.nn.modules.loss import _WeightedLoss # type: ignore
+from torch.optim import Adam, Optimizer
+from torch.optim.lr_scheduler import LambdaLR, LRScheduler
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from yaml_config_override import add_arguments # type: ignore
+
+from data_classes.emovo_dataset import EmovoDataset, Sample
+from metrics import Metrics, compute_metrics, evaluate
+from model_classes.cnn_model import EmovoCNN
+
+
 def train_one_epoch(
-    model: nn.Module,
-    dataloader: torch.utils.data.DataLoader[Sample],
-    criterion: torch.nn.modules.loss._WeightedLoss, # type: ignore
-    optimizer: torch.optim.Optimizer,
-    scheduler: torch.optim.lr_scheduler.LRScheduler,
+    model: Module,
+    dataloader: DataLoader[Sample],
+    criterion: _WeightedLoss,
+    optimizer: Optimizer,
+    scheduler: LRScheduler,
     device: torch.device
 ) -> Metrics:
     model.train()
@@ -43,13 +48,13 @@ def train_one_epoch(
     return compute_metrics(predictions, references, running_loss, len(dataloader))
 
 def manage_best_model_and_metrics(
-    model: nn.Module,
+    model: Module,
     evaluation_metric: str,
     val_metrics: Metrics,
     best_val_metric: float,
-    best_model: nn.Module,
+    best_model: Module,
     lower_is_better: bool
-) -> tuple[float, nn.Module]:
+) -> tuple[float, Module]:
     metric = val_metrics[evaluation_metric] # type: ignore
 
     if lower_is_better:
@@ -91,21 +96,21 @@ if __name__ == "__main__":
     train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_size, len(train_dataset) - train_size])
 
     # Crea il DataLoader di Train
-    train_dl = torch.utils.data.DataLoader(
+    train_dl = DataLoader(
         train_dataset,
         batch_size=config["training"]["batch_size"],
         shuffle=True
     )
 
     # Crea il DataLoader di Validation
-    val_dl = torch.utils.data.DataLoader(
+    val_dl = DataLoader(
         val_dataset,
         batch_size=config["training"]["batch_size"],
         shuffle=False
     )
 
     # Crea il DataLoader di Test
-    test_dl = torch.utils.data.DataLoader(
+    test_dl = DataLoader(
         test_dataset,
         batch_size=config["training"]["batch_size"],
         shuffle=False
@@ -118,17 +123,17 @@ if __name__ == "__main__":
     print()
 
     # Definisce una funzione di loss
-    criterion = nn.CrossEntropyLoss()
+    criterion = CrossEntropyLoss()
 
     # Definisce un optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["lr"])
+    optimizer = Adam(model.parameters(), lr=config["training"]["lr"])
 
     # learning rate scheduler
     total_steps = len(train_dl) * config["training"]["epochs"]
     warmup_steps = int(total_steps * config["training"]["warmup_ratio"])
     # warmup + linear decay
     scheduler_lambda = lambda step: (step / warmup_steps) if step < warmup_steps else max(0.0, (total_steps - step) / (total_steps - warmup_steps))
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=scheduler_lambda)
+    scheduler = LambdaLR(optimizer, lr_lambda=scheduler_lambda)
 
     if config["training"]["best_metric_lower_is_better"]:
         best_val_metric = float("inf")

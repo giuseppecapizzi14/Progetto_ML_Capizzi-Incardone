@@ -1,11 +1,13 @@
 from typing import TypedDict
+
 import torch
-import torch.utils
-import torch.utils.data
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score # type: ignore
+from torch.nn.modules.loss import _WeightedLoss  # type: ignore
+from torch.utils.data import DataLoader
 from tqdm import tqdm
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score # type: ignore
 
 from data_classes.emovo_dataset import Sample
+
 
 class Metrics(TypedDict):
     accuracy: float
@@ -30,8 +32,8 @@ def compute_metrics(references: list[int], predictions: list[int], running_loss:
 
 def evaluate(
     model: torch.nn.Module,
-    dataloader: torch.utils.data.DataLoader[Sample],
-    criterion: torch.nn.modules.loss._WeightedLoss, # type: ignore
+    dataloader: DataLoader[Sample],
+    criterion: _WeightedLoss,
     device: torch.device
 ) -> Metrics:
     model.eval()
