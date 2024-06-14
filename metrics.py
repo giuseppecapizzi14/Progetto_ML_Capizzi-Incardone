@@ -1,7 +1,8 @@
 from typing import TypedDict
 
 import torch
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score # type: ignore
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score  # type: ignore
+from torch.nn import Module
 from torch.nn.modules.loss import _WeightedLoss  # type: ignore
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -31,7 +32,7 @@ def compute_metrics(references: list[int], predictions: list[int], running_loss:
     } # type: ignore
 
 def evaluate(
-    model: torch.nn.Module,
+    model: Module,
     dataloader: DataLoader[Sample],
     criterion: _WeightedLoss,
     device: torch.device
@@ -42,7 +43,7 @@ def evaluate(
     references: list[int] = []
 
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Evaluate"):
+        for batch in tqdm(dataloader, desc="Evaluating"):
             waveform = batch["waveform"].to(device)
             labels = batch["label"].to(device)
 
