@@ -1,14 +1,12 @@
-from data_classes.emovo_dataset import EmovoDataset, Sample
+from data_classes.emovo_dataset import EmovoDataset
 from extract_representetion.audio_embeddings import AudioEmbeddings
 import torch
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 from yaml_config_override import add_arguments # type: ignore
 import numpy as np
 
 
 if __name__ == "__main__":
-
     # Legge il file di configurazione
     config = add_arguments()
 
@@ -40,7 +38,7 @@ if __name__ == "__main__":
         # Convert to mono if the waveform is not mono
         if waveform.shape[0] > 1:
             waveform = torch.mean(waveform, dim=0, keepdim=True)
-        
+
         # Ensure waveform is 2D: (batch, length)
         waveform = waveform.squeeze(0).numpy()
         embeddings = embeddings_extractor.extract(waveform)
