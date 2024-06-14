@@ -3,3 +3,4 @@ sklearn
 git+https://github.com/MorenoLaQuatra/yaml_config_override
 torchaudio
 tqdm
+gdown
