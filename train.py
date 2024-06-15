@@ -136,11 +136,10 @@ if __name__ == "__main__":
     warmup_ratio = config["training"]["warmup_ratio"]
     warmup_steps = int(total_steps * warmup_ratio)
 
-    # warmup + linear decay
-    def scheduler_fn(step: float):
+    def lr_warmup_linear_decay(step: int):
         return (step / warmup_steps) if step < warmup_steps else max(0.0, (total_steps - step) / (total_steps - warmup_steps))
 
-    scheduler = LambdaLR(optimizer, lr_lambda=scheduler_fn)
+    scheduler = LambdaLR(optimizer, lr_lambda=lr_warmup_linear_decay)
 
     # Modello migliore
     best_metric_lower_is_better = config["training"]["best_metric_lower_is_better"]
