@@ -24,7 +24,7 @@ if __name__ == "__main__":
     data_dir = config["data"]["data_dir"]
     test_dataset = EmovoDataset(data_dir, train=False, resample=True)
 
-    # Crea i DataLoader
+    # Crea il DataLoader
     batch_size = config["training"]["batch_size"]
     test_dl = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
 
@@ -33,6 +33,7 @@ if __name__ == "__main__":
     model = EmovoCNN(waveform_size = test_dataset.max_sample_len, dropout = dropout, device = device)
     model.to(device)
 
+    # Carica il modello precedentemente salvato in fase di train
     checkpoint_dir = config["training"]["checkpoint_dir"]
     model_name = config['training']['model_name']
     model_state = torch.load(f"{checkpoint_dir}/{model_name}.pt") # type: ignore
@@ -45,7 +46,7 @@ if __name__ == "__main__":
 
     print(f"Device: {device}")
 
-    # Valuta le metriche del modello
+    # Valuta le metriche del modello mediante il dataset di test
     test_metrics = evaluate(model, test_dl, criterion, device)
     for key, value in test_metrics.items():
         print(f"Test {key}: {value:.4f}")

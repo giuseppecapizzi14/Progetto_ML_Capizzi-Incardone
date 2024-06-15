@@ -82,13 +82,13 @@ if __name__ == "__main__":
     else:
         device = torch.device("cpu")
 
-    # Caricamento Dataset
+    # Caricamento dataset
     data_dir = config["data"]["data_dir"]
     train_dataset = EmovoDataset(data_dir, train=True, resample=True)
     test_dataset = EmovoDataset(data_dir, train=False, resample=True)
     max_sample_len = train_dataset.max_sample_len
 
-    # Calcola le dimensioni del Set di Train e del Set di Validation
+    # Calcola le dimensioni dei dataset
     train_ratio = config["data"]["train_ratio"]
     train_dataset_len = len(train_dataset)
     train_size = int(train_ratio * train_dataset_len)
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # Definisce una funzione di loss
     criterion = CrossEntropyLoss()
 
-    # Definisce un optimizer
+    # Definisce un optimizer con il learning rate specificato
     OPTIMIZERS = {
         "adadelta": Adadelta,
         "adagrad": Adagrad,
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     lr = config["training"]["lr"]
     optimizer = optimizer(model.parameters(), lr = lr)
 
-    # Definisce uno scheduler
+    # Definisce uno scheduler per il decay del learning rate
     epochs = config["training"]["epochs"]
     total_steps = len(train_dl) * epochs
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
     scheduler = LambdaLR(optimizer, lr_lambda=lr_warmup_linear_decay)
 
-    # Modello migliore
+    # Teniamo traccia del modello e della metrica migliore
     best_metric_lower_is_better = config["training"]["best_metric_lower_is_better"]
     best_val_metric = float("inf") if best_metric_lower_is_better else float("-inf")
     best_model = model
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     print(f"Test size: {len(test_dataset)}")
     print()
 
-    # Addestra il modello
+    # Addestra il modello per il numero di epoche specificate
     evaluation_metric = config["training"]["evaluation_metric"]
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}/{epochs}")
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         )
         print()
 
-    # Valuta le metriche del modello
+    # Valuta le metriche del modello mediante il dataset di test
     test_metrics = evaluate(best_model, test_dl, criterion, device)
     for key, value in test_metrics.items():
         print(f"Test {key}: {value:.4f}")
