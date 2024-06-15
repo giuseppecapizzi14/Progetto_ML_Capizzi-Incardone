@@ -2,7 +2,6 @@ import os
 
 import torch.utils.data
 from torch.nn import CrossEntropyLoss, Module
-from torch.nn.modules.loss import _WeightedLoss # type: ignore
 from torch.optim import Adadelta, Adagrad, Adam, Adamax, AdamW, ASGD, LBFGS, NAdam, Optimizer, RAdam, RMSprop, Rprop, SGD, SparseAdam
 from torch.optim.lr_scheduler import LambdaLR, LRScheduler
 from torch.utils.data import DataLoader
@@ -17,7 +16,7 @@ from model_classes.cnn_model import EmovoCNN
 def train_one_epoch(
     model: Module,
     dataloader: DataLoader[Sample],
-    criterion: _WeightedLoss,
+    loss_criterion: CrossEntropyLoss,
     optimizer: Optimizer,
     scheduler: LRScheduler,
     device: torch.device
@@ -34,7 +33,7 @@ def train_one_epoch(
         optimizer.zero_grad()
 
         outputs = model(waveform)
-        loss = criterion(outputs, labels)
+        loss = loss_criterion(outputs, labels)
         loss.backward()
         optimizer.step()
         scheduler.step()
