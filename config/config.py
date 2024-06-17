@@ -1,5 +1,6 @@
 from typing import Any
-from yaml_config_override import add_arguments # type: ignore
+
+from yaml_config_override import add_arguments  # type: ignore
 
 
 def args() -> dict[str, Any]:

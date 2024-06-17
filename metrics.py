@@ -2,7 +2,7 @@ from typing import TypedDict
 
 import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score  # type: ignore
-from torch.nn import Module, CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 

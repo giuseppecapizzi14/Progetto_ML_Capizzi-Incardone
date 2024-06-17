@@ -1,8 +1,9 @@
 import torch
 from torch import Tensor
-from torch.nn import Module, Sequential, Conv1d, BatchNorm1d, ReLU, MaxPool1d,   Dropout, Linear
+from torch.nn import BatchNorm1d, Conv1d, Dropout, Linear, MaxPool1d, Module, ReLU, Sequential
 
 from data_classes.emovo_dataset import EmovoDataset
+
 
 class EmovoCNN(Module):
     def __init__(self, waveform_size: int, dropout: float, device: torch.device):

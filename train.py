@@ -1,8 +1,10 @@
 import os
 
 import torch.utils.data
+from torch import Tensor
 from torch.nn import CrossEntropyLoss, Module
-from torch.optim import Adadelta, Adagrad, Adam, Adamax, AdamW, ASGD, LBFGS, NAdam, Optimizer, RAdam, RMSprop, Rprop, SGD, SparseAdam
+from torch.optim import (ASGD, LBFGS, SGD, Adadelta, Adagrad, Adam, Adamax, AdamW, NAdam, Optimizer,
+                         RAdam, RMSprop, Rprop, SparseAdam)
 from torch.optim.lr_scheduler import LambdaLR, LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -27,20 +29,23 @@ def train_one_epoch(
     references: list[int] = []
 
     for batch in tqdm(dataloader, desc="Training"):
-        waveform = batch["waveform"].to(device)
-        labels = batch["label"].to(device)
+        waveforms: Tensor = batch["waveform"]
+        waveforms = waveforms.to(device)
+
+        labels: Tensor = batch["label"]
+        labels = labels.to(device)
 
         optimizer.zero_grad()
 
-        outputs = model(waveform)
-        loss = loss_criterion(outputs, labels)
-        loss.backward()
+        outputs = model(waveforms)
+        loss: Tensor = loss_criterion(outputs, labels)
+        loss.backward() # type: ignore
         optimizer.step()
         scheduler.step()
 
         running_loss += loss.item()
 
-        pred = torch.argmax(outputs, dim=1)
+        pred = torch.argmax(outputs, dim = 1)
         predictions.extend(pred.cpu().numpy())
         references.extend(labels.cpu().numpy())
 

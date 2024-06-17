@@ -1,8 +1,8 @@
 import torch
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
-from config.config import args
 
+from config.config import args
 from data_classes.emovo_dataset import EmovoDataset
 from metrics import evaluate
 from model_classes.cnn_model import EmovoCNN
