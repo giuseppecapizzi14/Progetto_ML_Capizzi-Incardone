@@ -1,14 +1,14 @@
 from typing import Any
 
-import numpy as np
+import numpy
 import torch
 import torch.utils.data
+from numpy import int64
 from numpy.typing import NDArray
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix  # type: ignore
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from torch import Tensor
-from torch.types import Number
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -20,24 +20,26 @@ from extract_representetion.audio_embeddings import AudioEmbeddings
 def extract_embeddings_and_labels(
     dataloader: DataLoader[Sample],
     embeddings_extractor: AudioEmbeddings
-) -> tuple[NDArray[Any], NDArray[Any]]:
+) -> tuple[NDArray[Any], NDArray[int64]]:
+    batch_count = len(dataloader)
     embeddings_list: list[Tensor] = []
-    labels_list: list[Number] = []
+    labels_list: list[int] = []
 
-    for sample in dataloader:
-        waveforms: Tensor = sample["waveform"]
-        labels: Tensor = sample["label"]
+    for batch_idx, batch in enumerate(dataloader):
+        print(f"Batch {batch_idx + 1}/{batch_count}")
 
-        for waveform, label in tqdm(zip(waveforms, labels), desc = "Extracting"):
-            embeddings = embeddings_extractor.extract(waveform)
-            # TODO(stefano): controllare se è necessario fare questo squeeze
-            embeddings.squeeze_()
+        labels: Tensor = batch["label"]
+        labels_list.extend(labels.tolist()) # type: ignore
 
+        waveforms: Tensor = batch["waveform"]
+        for waveform in tqdm(waveforms, desc = "Extracting"):
+            embeddings = embeddings_extractor.extract(waveform).squeeze_()
             embeddings_list.append(embeddings)
-            labels_list.append(label.item())
 
-    embeddings_array = np.vstack(embeddings_list) # type: ignore
-    labels_array = np.array(labels_list)
+        print()
+
+    embeddings_array = numpy.vstack(embeddings_list) # type: ignore
+    labels_array = numpy.array(labels_list)
 
     return embeddings_array, labels_array
 
