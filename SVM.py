@@ -10,6 +10,7 @@ from sklearn.svm import SVC
 from torch import Tensor
 from torch.types import Number
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from config.config import args
 from data_classes.emovo_dataset import EmovoDataset, Sample
@@ -27,7 +28,7 @@ def extract_embeddings_and_labels(
         waveforms: Tensor = sample["waveform"]
         labels: Tensor = sample["label"]
 
-        for waveform, label in zip(waveforms, labels):
+        for waveform, label in tqdm(zip(waveforms, labels), desc = "Extracting"):
             embeddings = embeddings_extractor.extract(waveform)
             # TODO(stefano): controllare se è necessario fare questo squeeze
             embeddings.squeeze_()
