@@ -11,7 +11,7 @@ frasi con intonazioni e stati d'animo differenti da soggetti di sesso maschile e
 Il progetto è stato testato su sistemi con:
 
 - Windows 11:
-    - [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+    - [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) con Ubuntu 22.04.4 LTS (richiede la libreria `libcudart11.0`)
     - CPU: Intel i7-8565u
     - GPU: Nvidia MX250 abilitata per utilizzo capacità di sviluppo CUDA
     - RAM: 16 GB
