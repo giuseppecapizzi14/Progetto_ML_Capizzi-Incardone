@@ -2,8 +2,7 @@ from typing import TypedDict
 
 import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score  # type: ignore
-from torch.nn import Module
-from torch.nn.modules.loss import _WeightedLoss  # type: ignore
+from torch.nn import Module, CrossEntropyLoss
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -18,23 +17,18 @@ class Metrics(TypedDict):
     loss: float
 
 def compute_metrics(references: list[int], predictions: list[int], running_loss: float, dataset_len: int) -> Metrics:
-    accuracy = accuracy_score(references, predictions)
-    precision = precision_score(references, predictions, average="macro") # type: ignore
-    recall = recall_score(references, predictions, average="macro") # type: ignore
-    f1 = f1_score(references, predictions, average="macro") # type: ignore
-
     return {
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1": f1,
+        "accuracy": accuracy_score(references, predictions),
+        "precision": precision_score(references, predictions, average="macro"),
+        "recall": recall_score(references, predictions, average="macro"),
+        "f1": f1_score(references, predictions, average="macro"),
         "loss": running_loss / dataset_len
     } # type: ignore
 
 def evaluate(
     model: Module,
     dataloader: DataLoader[Sample],
-    criterion: _WeightedLoss,
+    criterion: CrossEntropyLoss,
     device: torch.device
 ) -> Metrics:
     model.eval()

@@ -4,7 +4,7 @@ Il progetto si basa su modello basato sulle [CNN](https://en.wikipedia.org/wiki/
 e in particolare sui loro utilizzi e applicazioni per l'analisi di dati audio. In particolare la
 rete creata andrà ad analizzare il dataset [EMOVO](https://dagshub.com/kingabzpro/EMOVO), il quale
 contiene registrazioni di discorsi parlati in lingua italiana, al cui interno vengono pronunciate
-frasi con intonazioni e stati d'animo differenti da soggetti di sesso maschile e femminile
+frasi con intonazioni e stati d'animo differenti da soggetti di sesso maschile e femminile.
 
 ## Requisiti di sistema
 
@@ -67,7 +67,7 @@ adibiti alla configurazione degli iperparametri del modello, ovvero:
 
 Il dataset si compone di tracce audio di frasi parlate in italiano da soggetti di sesso maschile e
 femminile con diverse intonazioni ed emozioni. In particolare il dataset viene gestito dalle classi
-dentro il file [`emovo_dataset.py`](data_classes/emovo_dataset.py)
+dentro il file [`emovo_dataset.py`](data_classes/emovo_dataset.py).
 
 Il dataset viene gestito dalla classe `EmovoDataset`, che ci permette di raccogliere, estrarre e
 caricare i file audio grezzi.
@@ -99,7 +99,7 @@ successivamente eseguirà i seguenti passaggi:
 ### Estrazione del file audio grezzo
 
 L'estrazione dei file audio e le informazion ad esso relative verranno estratte in maniera lazy
-dentro il metodo `\__getitem__`, che prendendo come input l'indice del file audio da estrarre,
+dentro il metodo `__getitem__`, che prendendo come input l'indice del file audio da estrarre,
 andrà a:
 
 - recuperare il percorso del file e la label corrispondente
@@ -117,3 +117,28 @@ Infine ritornerà un'istanza della classe `Sample`, ovvero un dizionario contene
 | **waveform**    | torch.Tensor | il tensore che ci descrive in maniera grezza la forma d'onda del file audio                                                  |
 | **sample_rate** | int          | il sample rate della forma d'onda del file audio grezzo                                                                      |
 | **label**       | int          | la label relativa alla [feature]((https://dagshub.com/kingabzpro/EMOVO#organization-of-the-dataset)) associata al file audio |
+
+## Modello CNN
+
+Il modello che andrà ad analizzare e ad imparare il dataset è basato su un'architettura CNN,
+implementata con la classe `EmovoCNN` secondo l'architettura descritta in
+[`cnn_model.py`](model_classes/cnn_model.py).
+
+### Inizializzazione
+
+La classe richiede i seguenti parametri di inizializzazione:
+
+| nome              | tipo         | valori accettati                                               | descrizione                                                                                   |
+| :---------------- | :----------- | :------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| **waveform_size** | int          |                                                                | la dimensione della waveform che andrà analizzata dal modello, ovvero l'input al primo strato |
+| **dropout**       | float        | \[0, 1]                                                        | percentuale dropout da applicare tra un layer e un altro                                      |
+| **device**        | torch.device | torch.device("cpu"), torch.device("cuda"), torch.device("mps") | dispositivo di accelerazione hardware da utilizzare durante l'addestramento                   |
+
+### Addestramento e test
+
+L'addestramento inizia leggendo i [parametri di configurazione](#configurazione-parametri-modello)
+precedenetemente descritti, quindi eseguendo i passaggi in [`train.py`](train.py).
+
+Dopo l'addestramento il modello risultante verrà salvato nella **checkpoint_dir** specificata,
+pertanto sarà possibile valutarne e testarne le prestazioni successivamente mediante i passaggi in
+[`test.py`](test.py), con i criteri e i metodi di valutazione descritti in [`metrics.py`](metrics.py).

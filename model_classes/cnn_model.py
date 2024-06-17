@@ -1,6 +1,6 @@
 import torch
 from torch import Tensor
-from torch.nn import Module, Sequential, Conv1d, BatchNorm1d, ReLU, MaxPool1d, Dropout, Linear
+from torch.nn import Module, Sequential, Conv1d, BatchNorm1d, ReLU, MaxPool1d,   Dropout, Linear
 
 from data_classes.emovo_dataset import EmovoDataset
 
@@ -23,10 +23,10 @@ class EmovoCNN(Module):
 
         # Primo strato convoluzionale sequenziale
         self.conv1 = Sequential(
-            Conv1d(in_channels=2, out_channels=8, kernel_size=conv1_kernel_size, stride=conv1_stride, device=device),
-            BatchNorm1d(8),
+            Conv1d(in_channels = 2, out_channels = 8, kernel_size = conv1_kernel_size, stride = conv1_stride, device = device),
+            BatchNorm1d(num_features = 8),
             ReLU(),
-            MaxPool1d(kernel_size=pool1_kernel_size, stride=pool1_stride),
+            MaxPool1d(kernel_size = pool1_kernel_size, stride = pool1_stride),
             Dropout(dropout)
         )
 
@@ -42,10 +42,10 @@ class EmovoCNN(Module):
 
         # Secondo strato convoluzionale sequenziale
         self.conv2 = Sequential(
-            Conv1d(in_channels=8, out_channels=16, kernel_size=conv2_kernel_size, stride=conv2_stride, device=device),
-            BatchNorm1d(16),
+            Conv1d(in_channels = 8, out_channels = 16, kernel_size = conv2_kernel_size, stride = conv2_stride, device = device),
+            BatchNorm1d(num_features = 16),
             ReLU(),
-            MaxPool1d(kernel_size=pool2_kernel_size, stride=pool2_stride),
+            MaxPool1d(kernel_size = pool2_kernel_size, stride = pool2_stride),
             Dropout(dropout)
         )
 
@@ -61,10 +61,10 @@ class EmovoCNN(Module):
 
         # Terzo strato convoluzionale sequenziale
         self.conv3 = Sequential(
-            Conv1d(in_channels=16, out_channels=32, kernel_size=conv3_kernel_size, stride=conv3_stride, device=device),
-            BatchNorm1d(32),
+            Conv1d(in_channels = 16, out_channels = 32, kernel_size = conv3_kernel_size, stride = conv3_stride, device = device),
+            BatchNorm1d(num_features = 32),
             ReLU(),
-            MaxPool1d(kernel_size=pool3_kernel_size, stride=pool3_stride),
+            MaxPool1d(kernel_size = pool3_kernel_size, stride = pool3_stride),
             Dropout(dropout)
         )
 
@@ -80,10 +80,10 @@ class EmovoCNN(Module):
 
         # Quarto strato convoluzionale sequenziale
         self.conv4 = Sequential(
-            Conv1d(in_channels=32, out_channels=64, kernel_size=conv4_kernel_size, stride=conv4_stride, device=device),
-            BatchNorm1d(64),
+            Conv1d(in_channels = 32, out_channels = 64, kernel_size = conv4_kernel_size, stride = conv4_stride, device = device),
+            BatchNorm1d(num_features = 64),
             ReLU(),
-            MaxPool1d(kernel_size=pool4_kernel_size, stride=pool4_stride),
+            MaxPool1d(kernel_size = pool4_kernel_size, stride = pool4_stride),
             Dropout(dropout)
         )
 
@@ -99,25 +99,24 @@ class EmovoCNN(Module):
 
         # Quinto strato convoluzionale sequenziale
         self.conv5 = Sequential(
-            Conv1d(in_channels=64, out_channels=128, kernel_size=conv5_kernel_size, stride=conv5_stride, device=device),
-            BatchNorm1d(128),
+            Conv1d(in_channels = 64, out_channels = 128, kernel_size = conv5_kernel_size, stride = conv5_stride, device = device),
+            BatchNorm1d(num_features = 128),
             ReLU(),
-            MaxPool1d(kernel_size=pool5_kernel_size, stride=pool5_stride),
+            MaxPool1d(kernel_size = pool5_kernel_size, stride = pool5_stride),
             Dropout(dropout)
         )
-
 
         # Primo strato completamente connesso
         self.fc1 = Sequential(
             # Numero di unità in input: 64 canali * lunghezza del segnale dopo il pooling
-            Linear(in_features=128 * self.sample_len, out_features=128, device=device),
+            Linear(in_features = 128 * self.sample_len, out_features = 128, device = device),
             ReLU(),
             # Dropout per ridurre l'overfitting
             Dropout(dropout)
         )
 
         # Secondo strato completamente connesso (output)
-        self.fc2 = Linear(in_features=128, out_features=len(EmovoDataset.LABEL_DICT), device=device)
+        self.fc2 = Linear(in_features = 128, out_features = len(EmovoDataset.LABEL_DICT), device = device)
 
     def forward(self, x: Tensor):
         # Passaggio attraverso gli strati convoluzionali

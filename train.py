@@ -2,7 +2,6 @@ import os
 
 import torch.utils.data
 from torch.nn import CrossEntropyLoss, Module
-from torch.nn.modules.loss import _WeightedLoss # type: ignore
 from torch.optim import Adadelta, Adagrad, Adam, Adamax, AdamW, ASGD, LBFGS, NAdam, Optimizer, RAdam, RMSprop, Rprop, SGD, SparseAdam
 from torch.optim.lr_scheduler import LambdaLR, LRScheduler
 from torch.utils.data import DataLoader
@@ -17,7 +16,7 @@ from model_classes.cnn_model import EmovoCNN
 def train_one_epoch(
     model: Module,
     dataloader: DataLoader[Sample],
-    criterion: _WeightedLoss,
+    loss_criterion: CrossEntropyLoss,
     optimizer: Optimizer,
     scheduler: LRScheduler,
     device: torch.device
@@ -34,7 +33,7 @@ def train_one_epoch(
         optimizer.zero_grad()
 
         outputs = model(waveform)
-        loss = criterion(outputs, labels)
+        loss = loss_criterion(outputs, labels)
         loss.backward()
         optimizer.step()
         scheduler.step()
@@ -83,31 +82,33 @@ if __name__ == "__main__":
     else:
         device = torch.device("cpu")
 
-    # Caricamento Dataset
+    # Caricamento dataset
     data_dir = config["data"]["data_dir"]
     train_dataset = EmovoDataset(data_dir, train=True, resample=True)
     test_dataset = EmovoDataset(data_dir, train=False, resample=True)
+    max_sample_len = train_dataset.max_sample_len
 
-    # Crea il modello
-    dropout = config["model"]["dropout"]
-    model = EmovoCNN(waveform_size = train_dataset.max_sample_len, dropout = dropout, device = device)
-    model.to(device)
-
-    # Calcola le dimensioni del Set di Train e del Set di Validation
+    # Calcola le dimensioni dei dataset
     train_ratio = config["data"]["train_ratio"]
-    train_size = int(train_ratio * len(train_dataset))
-    train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_size, len(train_dataset) - train_size])
+    train_dataset_len = len(train_dataset)
+    train_size = int(train_ratio * train_dataset_len)
+    train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_size, train_dataset_len - train_size])
 
     # Crea i DataLoader
     batch_size = config["training"]["batch_size"]
     train_dl = DataLoader(train_dataset, batch_size = batch_size, shuffle = True)
-    val_dl = DataLoader(val_dataset, batch_size = batch_size, shuffle = False)
     test_dl = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
+    val_dl = DataLoader(val_dataset, batch_size = batch_size, shuffle = False)
+
+    # Crea il modello
+    dropout = config["model"]["dropout"]
+    model = EmovoCNN(waveform_size = max_sample_len, dropout = dropout, device = device)
+    model.to(device)
 
     # Definisce una funzione di loss
     criterion = CrossEntropyLoss()
 
-    # Definisce un optimizer
+    # Definisce un optimizer con il learning rate specificato
     OPTIMIZERS = {
         "adadelta": Adadelta,
         "adagrad": Adagrad,
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     lr = config["training"]["lr"]
     optimizer = optimizer(model.parameters(), lr = lr)
 
-    # Definisce uno scheduler
+    # Definisce uno scheduler per il decay del learning rate
     epochs = config["training"]["epochs"]
     total_steps = len(train_dl) * epochs
 
@@ -141,7 +142,7 @@ if __name__ == "__main__":
 
     scheduler = LambdaLR(optimizer, lr_lambda=lr_warmup_linear_decay)
 
-    # Modello migliore
+    # Teniamo traccia del modello e della metrica migliore
     best_metric_lower_is_better = config["training"]["best_metric_lower_is_better"]
     best_val_metric = float("inf") if best_metric_lower_is_better else float("-inf")
     best_model = model
@@ -153,7 +154,7 @@ if __name__ == "__main__":
     print(f"Test size: {len(test_dataset)}")
     print()
 
-    # Addestra il modello
+    # Addestra il modello per il numero di epoche specificate
     evaluation_metric = config["training"]["evaluation_metric"]
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}/{epochs}")
@@ -179,7 +180,7 @@ if __name__ == "__main__":
         )
         print()
 
-    # Valuta le metriche del modello
+    # Valuta le metriche del modello mediante il dataset di test
     test_metrics = evaluate(best_model, test_dl, criterion, device)
     for key, value in test_metrics.items():
         print(f"Test {key}: {value:.4f}")
