@@ -89,15 +89,20 @@ if __name__ == "__main__":
 
     # Caricamento dataset
     data_dir = config["data"]["data_dir"]
-    train_dataset = EmovoDataset(data_dir, train=True, resample=True)
-    test_dataset = EmovoDataset(data_dir, train=False, resample=True)
-    max_sample_len = train_dataset.max_sample_len
+    dataset = EmovoDataset(data_dir, resample=True)
 
     # Calcola le dimensioni dei dataset
     train_ratio = config["data"]["train_ratio"]
-    train_dataset_len = len(train_dataset)
-    train_size = int(train_ratio * train_dataset_len)
-    train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_size, train_dataset_len - train_size])
+    test_val_ratio = config["data"]["test_val_ratio"]
+    dataset_size = len(dataset)
+
+    train_size = int(train_ratio * dataset_size)
+
+    test_val_size = dataset_size - train_size
+    test_size = int(test_val_size * test_val_ratio)
+    val_size = test_val_size - test_size
+
+    train_dataset, test_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size, val_size])
 
     # Crea i DataLoader
     batch_size = config["training"]["batch_size"]
@@ -107,7 +112,7 @@ if __name__ == "__main__":
 
     # Crea il modello
     dropout = config["model"]["dropout"]
-    model = EmovoCNN(waveform_size = max_sample_len, dropout = dropout, device = device)
+    model = EmovoCNN(waveform_size = dataset.max_sample_len, dropout = dropout, device = device)
     model.to(device)
 
     # Definisce una funzione di loss
@@ -162,7 +167,7 @@ if __name__ == "__main__":
     # Addestra il modello per il numero di epoche specificate
     evaluation_metric = config["training"]["evaluation_metric"]
     for epoch in range(epochs):
-        print(f"Epoch {epoch+1}/{epochs}")
+        print(f"Epoch {epoch + 1}/{epochs}")
 
         train_metrics = train_one_epoch(model, train_dl, criterion, optimizer, scheduler, device)
         val_metrics = evaluate(model, val_dl, criterion, device)

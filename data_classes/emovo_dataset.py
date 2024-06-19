@@ -27,9 +27,8 @@ class EmovoDataset(Dataset[Sample]):
     TARGET_SAMPLE_RATE = 16_000
     EXPECTED_CHANNELS = 2
 
-    def __init__(self, data_path: str, train: bool = True, resample: bool = True):
+    def __init__(self, data_path: str, resample: bool = True):
         self.data_path = data_path
-        self.train = train
         self.audio_files: list[str] = []
         self.labels: list[int] = []
         self.resample = resample
