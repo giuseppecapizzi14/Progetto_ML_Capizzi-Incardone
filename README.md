@@ -37,10 +37,11 @@ adibiti alla configurazione degli iperparametri del modello, ovvero:
 
 - **data**: parametri di configurazione del dataset
 
-    | nome            | tipo  |  valori accettati  | descrizione                                                                      |
-    | :-------------- | :---- | :----------------: | :------------------------------------------------------------------------------- |
-    | **train_ratio** | float |      \[0, 1]       | proporzione di divisione del dataset in train e test                             |
-    | **data_dir**    | str   | percorso directory | percorso directory dataset (precedentemente scaricati nella directory `dataset`) |
+    | nome               | tipo  |  valori accettati  | descrizione                                                                      |
+    | :----------------- | :---- | :----------------: | :------------------------------------------------------------------------------- |
+    | **train_ratio**    | float |      \[0, 1]       | proporzione di divisione del dataset in train e test/validazione                 |
+    | **test_val_ratio** | float |      \[0, 1]       | proporzione di divisione del dataset in test e validazione                       |
+    | **data_dir**       | str   | percorso directory | percorso directory dataset (precedentemente scaricati nella directory `dataset`) |
 
 - **model**: parametri di configurazione del modello
 
