@@ -24,6 +24,7 @@ class EmovoDataset(Dataset[Sample]):
         "neu": 6,
     }
 
+    EXPECTED_SAMPLE_RATE = 48000
     TARGET_SAMPLE_RATE = 16_000
     EXPECTED_CHANNELS = 2
 
@@ -60,17 +61,15 @@ class EmovoDataset(Dataset[Sample]):
                 self.audio_files.append(audio_path)
                 self.labels.append(EmovoDataset.LABEL_DICT[label])
 
-        EXPECTED_SAMPLE_RATE = 48000
-
         # Arrotondo i sample per eccesso a una durate di n secondi
-        misalignment = self.max_sample_len % EXPECTED_SAMPLE_RATE
+        misalignment = self.max_sample_len % EmovoDataset.EXPECTED_SAMPLE_RATE
         if misalignment != 0:
-            padding = EXPECTED_SAMPLE_RATE - misalignment
+            padding = EmovoDataset.EXPECTED_SAMPLE_RATE - misalignment
             self.max_sample_len += padding
 
         # Porto il max_sample_len ad utilizzare il nuovo sample rate
         if resample:
-            SAMPLE_RATE_RATIO = int(EXPECTED_SAMPLE_RATE // EmovoDataset.TARGET_SAMPLE_RATE)
+            SAMPLE_RATE_RATIO = int(EmovoDataset.EXPECTED_SAMPLE_RATE // EmovoDataset.TARGET_SAMPLE_RATE)
             self.max_sample_len //= SAMPLE_RATE_RATIO
 
     def __len__(self) -> int:

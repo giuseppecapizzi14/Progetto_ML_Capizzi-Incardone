@@ -33,18 +33,18 @@ if __name__ == "__main__":
     train_dl = DataLoader(train_dataset, batch_size = batch_size, shuffle = True)
     test_dl = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
 
+    # Stampa le informazioni sul processo di training
+    print(f"Device: {device}")
+    print(f"Train size: {len(train_dataset)}")
+    print(f"Test size: {len(test_dataset)}")
+    print()
+
     # Crea un'instanza della funzione di embeddings
     embeddings_extractor = AudioEmbeddings(device = device)
 
     # Estrai embeddings e etichette dai set di train e test
     train_embeddings, train_labels = embeddings_extractor.extract_embeddings_and_labels(train_dl)
     test_embeddings, test_labels = embeddings_extractor.extract_embeddings_and_labels(test_dl)
-
-    print(f"Device: {device}")
-    print(train_embeddings.shape)
-    print(train_labels.shape)
-    print(test_embeddings.shape)
-    print(test_labels.shape)
 
     # Normalizza le embeddings
     scaler = StandardScaler()

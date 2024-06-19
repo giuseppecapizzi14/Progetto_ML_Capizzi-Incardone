@@ -1,5 +1,5 @@
 data:
-  train_ratio: 0.8
+  train_ratio: 0.85
   test_val_ratio: 0.4
   data_dir: dataset
 
@@ -8,10 +8,10 @@ model:
 
 training:
   epochs: 20
-  batch_size: 32
+  batch_size: 16
   optimizer: adam
   lr: 0.005
-  warmup_ratio: 0.2
+  warmup_ratio: 0.3
   checkpoint_dir: checkpoints/
   model_name: best_model
   device: mps
