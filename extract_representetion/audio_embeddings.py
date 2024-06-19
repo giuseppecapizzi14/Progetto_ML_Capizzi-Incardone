@@ -1,9 +1,16 @@
+from typing import Any
+
+import numpy
 import torch
+from numpy import int64
+from numpy.typing import NDArray
 from torch import Tensor
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 from transformers import AutoFeatureExtractor, AutoModel, PreTrainedModel, Wav2Vec2FeatureExtractor
 from transformers.modeling_outputs import BaseModelOutput
 
-from data_classes.emovo_dataset import EmovoDataset
+from data_classes.emovo_dataset import EmovoDataset, Sample
 
 
 class AudioEmbeddings:
@@ -24,16 +31,36 @@ class AudioEmbeddings:
         # eval mode
         self.model.eval() # type: ignore
 
-    def extract(self, speech: Tensor) -> Tensor:
-        # Converte in mono l'audio se non lo è
-        if speech.ndim > 1 and speech.shape[0] > 1:
-            speech = torch.mean(speech, dim = 0)
+    def extract_embeddings_and_labels(self, dataloader: DataLoader[Sample]) -> tuple[NDArray[Any], NDArray[int64]]:
+        batch_count = len(dataloader)
+        embeddings_list: list[Tensor] = []
+        labels_list: list[int] = []
 
-        features = self.processor(speech.numpy(), return_tensors = "pt", sampling_rate = EmovoDataset.TARGET_SAMPLE_RATE)
-        input_values: Tensor = features.data["input_values"] # type: ignore
-        input_values = input_values.to(self.device) # type: ignore
+        for batch_idx, batch in enumerate(dataloader):
+            print(f"Batch {batch_idx + 1}/{batch_count}")
 
-        with torch.no_grad():
-            outputs: BaseModelOutput = self.model(input_values)
+            labels: Tensor = batch["label"]
+            labels_list.extend(labels.tolist()) # type: ignore
 
-        return outputs.last_hidden_state.mean(dim = 1).cpu()
+            waveforms: Tensor = batch["waveform"]
+            for waveform in tqdm(waveforms, desc = "Extracting"):
+                # Converte in mono l'audio se non lo è
+                if waveform.ndim > 1 and waveform.shape[0] > 1:
+                    waveform = torch.mean(waveform, dim = 0)
+
+                features = self.processor(waveform.numpy(), return_tensors = "pt", sampling_rate = EmovoDataset.TARGET_SAMPLE_RATE)
+                input_values: Tensor = features.data["input_values"] # type: ignore
+                input_values = input_values.to(self.device) # type: ignore
+
+                with torch.no_grad():
+                    outputs: BaseModelOutput = self.model(input_values)
+
+                embeddings = outputs.last_hidden_state.mean(dim = 1).cpu().squeeze_()
+                embeddings_list.append(embeddings)
+
+            print()
+
+        embeddings_array = numpy.vstack(embeddings_list) # type: ignore
+        labels_array = numpy.array(labels_list)
+
+        return embeddings_array, labels_array

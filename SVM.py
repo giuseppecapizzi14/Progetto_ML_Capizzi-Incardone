@@ -1,47 +1,13 @@
-from typing import Any
-
-import numpy
 import torch
 import torch.utils.data
-from numpy import int64
-from numpy.typing import NDArray
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix  # type: ignore
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from torch import Tensor
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from config.config import Config
-from data_classes.emovo_dataset import EmovoDataset, Sample
+from data_classes.emovo_dataset import EmovoDataset
 from extract_representetion.audio_embeddings import AudioEmbeddings
-
-
-def extract_embeddings_and_labels(
-    dataloader: DataLoader[Sample],
-    embeddings_extractor: AudioEmbeddings
-) -> tuple[NDArray[Any], NDArray[int64]]:
-    batch_count = len(dataloader)
-    embeddings_list: list[Tensor] = []
-    labels_list: list[int] = []
-
-    for batch_idx, batch in enumerate(dataloader):
-        print(f"Batch {batch_idx + 1}/{batch_count}")
-
-        labels: Tensor = batch["label"]
-        labels_list.extend(labels.tolist()) # type: ignore
-
-        waveforms: Tensor = batch["waveform"]
-        for waveform in tqdm(waveforms, desc = "Extracting"):
-            embeddings = embeddings_extractor.extract(waveform).squeeze_()
-            embeddings_list.append(embeddings)
-
-        print()
-
-    embeddings_array = numpy.vstack(embeddings_list) # type: ignore
-    labels_array = numpy.array(labels_list)
-
-    return embeddings_array, labels_array
 
 if __name__ == "__main__":
     # Legge il file di configurazione
@@ -71,8 +37,8 @@ if __name__ == "__main__":
     embeddings_extractor = AudioEmbeddings(device = device)
 
     # Estrai embeddings e etichette dai set di train e test
-    train_embeddings, train_labels = extract_embeddings_and_labels(train_dl, embeddings_extractor)
-    test_embeddings, test_labels = extract_embeddings_and_labels(test_dl, embeddings_extractor)
+    train_embeddings, train_labels = embeddings_extractor.extract_embeddings_and_labels(train_dl)
+    test_embeddings, test_labels = embeddings_extractor.extract_embeddings_and_labels(test_dl)
 
     print(f"Device: {device}")
     print(train_embeddings.shape)
