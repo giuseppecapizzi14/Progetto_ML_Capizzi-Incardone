@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from config.config import OPTIMIZERS, Config
 from data_classes.emovo_dataset import EmovoDataset, Sample
-from metrics import EvaluationMetric, Metrics, compute_metrics, evaluate
+from metrics import Metrics, compute_metrics, evaluate
 from model_classes.cnn_model import EmovoCNN
 
 
@@ -27,7 +27,7 @@ def train_one_epoch(
     predictions: list[int] = []
     references: list[int] = []
 
-    for batch in tqdm(dataloader, desc="Training"):
+    for batch in tqdm(dataloader, desc = "Training"):
         waveforms: Tensor = batch["waveform"]
         waveforms = waveforms.to(device)
 
@@ -36,7 +36,7 @@ def train_one_epoch(
 
         optimizer.zero_grad()
 
-        outputs = model(waveforms)
+        outputs: Tensor = model(waveforms)
         loss: Tensor = loss_criterion(outputs, labels)
         loss.backward() # type: ignore
         optimizer.step()
@@ -50,29 +50,6 @@ def train_one_epoch(
 
     return compute_metrics(predictions, references, running_loss, len(dataloader))
 
-def manage_best_model_and_metrics(
-    model: Module,
-    evaluation_metric: EvaluationMetric,
-    val_metrics: Metrics,
-    best_val_metric: float,
-    best_model: Module,
-    lower_is_better: bool
-) -> tuple[float, Module]:
-    metric = val_metrics[evaluation_metric]
-
-    if lower_is_better:
-        is_best = metric <= best_val_metric
-    else:
-        is_best = metric > best_val_metric
-
-    if is_best:
-        print(f"New best model found with val {evaluation_metric}: {metric:.4f}")
-        best_val_metric = metric
-        best_model = model
-
-    return best_val_metric, best_model
-
-
 if __name__ == "__main__":
     # Legge il file di configurazione
     config = Config()
@@ -80,7 +57,7 @@ if __name__ == "__main__":
     device = config.training.device
 
     # Carica il dataset
-    dataset = EmovoDataset(config.data.data_dir, resample=True)
+    dataset = EmovoDataset(config.data.data_dir, resample = True)
 
     # Calcola le dimensioni dei dataset
     # |------- dataset -------|
@@ -125,17 +102,17 @@ if __name__ == "__main__":
 
     scheduler = LambdaLR(optimizer, lr_lambda=lr_warmup_linear_decay)
 
-    # Teniamo traccia del modello e della metrica migliore
-    best_metric_lower_is_better = config.training.best_metric_lower_is_better
-    best_val_metric = float("inf") if best_metric_lower_is_better else float("-inf")
-    best_model = model
-
     # Stampa le informazioni sul processo di training
     print(f"Device: {device}")
     print(f"Train size: {len(train_dataset)}")
     print(f"Validation size: {len(val_dataset)}")
     print(f"Test size: {len(test_dataset)}")
     print()
+
+    # Teniamo traccia del modello e della metrica migliore
+    best_metric_lower_is_better = config.training.best_metric_lower_is_better
+    best_val_metric = float("inf") if best_metric_lower_is_better else float("-inf")
+    best_model = model
 
     # Addestra il modello per il numero di epoche specificate
     evaluation_metric = config.training.evaluation_metric
@@ -153,14 +130,13 @@ if __name__ == "__main__":
         print(f"Train loss: {train_loss:.4f} - Train accuracy: {train_accuracy:.4f}")
         print(f"Val loss: {val_loss:.4f} - Val accuracy: {val_accuracy:.4f}")
 
-        best_val_metric, best_model = manage_best_model_and_metrics(
-            model,
-            evaluation_metric,
-            val_metrics,
-            best_val_metric,
-            best_model,
-            best_metric_lower_is_better
-        )
+        metric = val_metrics[evaluation_metric]
+        is_best = metric <= best_val_metric if best_metric_lower_is_better else metric > best_val_metric
+        if is_best:
+            print(f"New best model found with val {evaluation_metric}: {metric:.4f}")
+            best_val_metric = metric
+            best_model = model
+
         print()
 
     # Valuta le metriche del modello mediante il dataset di test
@@ -171,7 +147,7 @@ if __name__ == "__main__":
     # Salva il modello
     checkpoint_dir = config.training.checkpoint_dir
     model_name = config.training.model_name
-    os.makedirs(checkpoint_dir, exist_ok=True)
+    os.makedirs(checkpoint_dir, exist_ok = True)
     torch.save(best_model.state_dict(), f"{checkpoint_dir}/{model_name}.pt") # type: ignore
 
     print("Model saved")

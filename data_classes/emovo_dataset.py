@@ -84,7 +84,7 @@ class EmovoDataset(Dataset[Sample]):
 
         # Resampling
         if self.resample and sample_rate != EmovoDataset.TARGET_SAMPLE_RATE:
-            resampler = Resample(orig_freq=sample_rate, new_freq=EmovoDataset.TARGET_SAMPLE_RATE)
+            resampler = Resample(orig_freq = sample_rate, new_freq = EmovoDataset.TARGET_SAMPLE_RATE)
             waveform = resampler(waveform)
             sample_rate = EmovoDataset.TARGET_SAMPLE_RATE
 

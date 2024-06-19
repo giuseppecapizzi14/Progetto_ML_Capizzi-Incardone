@@ -14,7 +14,7 @@ if __name__ == "__main__":
     device = config.training.device
 
     # Carica dataset
-    dataset = EmovoDataset(config.data.data_dir, resample=True)
+    dataset = EmovoDataset(config.data.data_dir, resample = True)
 
     # Crea i DataLoader
     batch_size = config.training.batch_size

@@ -2,6 +2,7 @@ from typing import Literal, TypedDict
 
 import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score  # type: ignore
+from torch import Tensor
 from torch.nn import CrossEntropyLoss, Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -26,16 +27,16 @@ class Metrics(TypedDict):
 def compute_metrics(references: list[int], predictions: list[int], running_loss: float, dataset_len: int) -> Metrics:
     return {
         "accuracy": accuracy_score(references, predictions),
-        "precision": precision_score(references, predictions, average="macro"),
-        "recall": recall_score(references, predictions, average="macro"),
-        "f1": f1_score(references, predictions, average="macro"),
+        "precision": precision_score(references, predictions, average = "macro"),
+        "recall": recall_score(references, predictions, average = "macro"),
+        "f1": f1_score(references, predictions, average = "macro"),
         "loss": running_loss / dataset_len
     } # type: ignore
 
 def evaluate(
     model: Module,
     dataloader: DataLoader[Sample],
-    criterion: CrossEntropyLoss,
+    loss_criterion: CrossEntropyLoss,
     device: torch.device
 ) -> Metrics:
     model.eval()
@@ -44,12 +45,15 @@ def evaluate(
     references: list[int] = []
 
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Evaluating"):
-            waveform = batch["waveform"].to(device)
-            labels = batch["label"].to(device)
+        for batch in tqdm(dataloader, desc = "Evaluating"):
+            waveform: Tensor = batch["waveform"]
+            waveform = waveform.to(device)
 
-            outputs = model(waveform)
-            loss = criterion(outputs, labels)
+            labels: Tensor = batch["label"]
+            labels = labels.to(device)
+
+            outputs: Tensor = model(waveform)
+            loss: Tensor = loss_criterion(outputs, labels)
 
             running_loss += loss.item()
 

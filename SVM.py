@@ -47,11 +47,10 @@ if __name__ == "__main__":
     # Legge il file di configurazione
     config = Config()
 
-    # Carica il device da utilizzare tra CUDA, MPS e CPU
     device = config.training.device
 
     # Carica il dataset
-    dataset = EmovoDataset(config.data.data_dir, resample=True)
+    dataset = EmovoDataset(config.data.data_dir, resample = True)
 
     # Calcola le dimensioni dei dataset
     # |------- dataset -------|
@@ -69,7 +68,7 @@ if __name__ == "__main__":
     test_dl = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
 
     # Crea un'instanza della funzione di embeddings
-    embeddings_extractor = AudioEmbeddings(device=device)
+    embeddings_extractor = AudioEmbeddings(device = device)
 
     # Estrai embeddings e etichette dai set di train e test
     train_embeddings, train_labels = extract_embeddings_and_labels(train_dl, embeddings_extractor)
