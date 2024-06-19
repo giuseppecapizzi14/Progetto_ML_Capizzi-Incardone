@@ -3,7 +3,6 @@ import os
 import torch.utils.data
 from torch import Tensor
 from torch.nn import CrossEntropyLoss, Module
-from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LambdaLR, LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -18,7 +17,6 @@ def train_one_epoch(
     model: Module,
     dataloader: DataLoader[Sample],
     loss_criterion: CrossEntropyLoss,
-    optimizer: Optimizer,
     scheduler: LRScheduler,
     device: torch.device
 ) -> Metrics:
@@ -34,12 +32,12 @@ def train_one_epoch(
         labels: Tensor = batch["label"]
         labels = labels.to(device)
 
-        optimizer.zero_grad()
+        scheduler.optimizer.zero_grad()
 
         outputs: Tensor = model(waveforms)
         loss: Tensor = loss_criterion(outputs, labels)
         loss.backward() # type: ignore
-        optimizer.step()
+        scheduler.optimizer.step()
         scheduler.step()
 
         running_loss += loss.item()
@@ -85,22 +83,37 @@ if __name__ == "__main__":
     # Definisce una funzione di loss
     criterion = CrossEntropyLoss()
 
-    # Definisce un optimizer con il learning rate specificato
-    optimizer = config.training.optimizer
-    optimizer = OPTIMIZERS[optimizer]
-
-    optimizer = optimizer(model.parameters(), lr = config.training.lr)
-
     # Definisce uno scheduler per il decay del learning rate
     epochs = config.training.epochs
     total_steps = len(train_dl) * epochs
 
+    base_lr = config.training.base_lr
+    min_lr = config.training.min_lr
+
     warmup_steps = int(total_steps * config.training.warmup_ratio)
 
-    def lr_warmup_linear_decay(step: int):
-        return (step / warmup_steps) if step < warmup_steps else max(0.0, (total_steps - step) / (total_steps - warmup_steps))
+    def lr_warmup_linear_decay(step: int) -> float:
+        if step < warmup_steps:
+            return step / warmup_steps
 
-    scheduler = LambdaLR(optimizer, lr_lambda=lr_warmup_linear_decay)
+        lr_factor = (total_steps - step) / (total_steps - warmup_steps)
+
+        # Non ancora al minimo learning rate
+        next_lr = base_lr * lr_factor
+        if next_lr > min_lr:
+            return lr_factor
+
+        # Al minimo learning rate, quindi ritorniamo un fattore che moltiplicato al learning rate
+        # corrente ci ritorna il learning rate minimo specificato da configurazione, quindi:
+        # base_lr * next_min_lr_factor = min_lr -> next_min_rl_factor = min_lr / base_lr
+        return min_lr / base_lr
+
+    # Definisce un optimizer con il learning rate specificato
+    optimizer = config.training.optimizer
+    optimizer = OPTIMIZERS[optimizer]
+    optimizer = optimizer(model.parameters(), lr = base_lr)
+
+    scheduler = LambdaLR(optimizer, lr_lambda = lr_warmup_linear_decay)
 
     # Stampa le informazioni sul processo di training
     print(f"Device: {device}")
@@ -118,8 +131,10 @@ if __name__ == "__main__":
     evaluation_metric = config.training.evaluation_metric
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}/{epochs}")
+        last_lr = scheduler.get_last_lr()[0]
+        print(f"Learning rate: {last_lr:.4f}")
 
-        train_metrics = train_one_epoch(model, train_dl, criterion, optimizer, scheduler, device)
+        train_metrics = train_one_epoch(model, train_dl, criterion, scheduler, device)
         val_metrics = evaluate(model, val_dl, criterion, device)
 
         train_loss = train_metrics["loss"]

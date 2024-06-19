@@ -74,7 +74,8 @@ class TrainingConfig:
     epochs: int
     batch_size: int
     optimizer: OptimizerKind
-    lr: float
+    base_lr: float
+    min_lr: float
     warmup_ratio: float
     checkpoint_dir: str
     model_name: str
@@ -87,7 +88,8 @@ class TrainingConfig:
         epochs: int,
         batch_size: int,
         optimizer: str,
-        lr: float,
+        base_lr: float,
+        min_lr: float,
         warmup_ratio: float,
         checkpoint_dir: str,
         model_name: str,
@@ -99,8 +101,14 @@ class TrainingConfig:
         if optimizer not in valid_optimizers:
             raise ValueError(f"'{optimizer}' must be one of {valid_optimizers}")
 
-        if lr <= 0:
-            raise ValueError(f"'lr' of {lr} must be a positive float")
+        if base_lr <= 0:
+            raise ValueError(f"'base_lr' of {base_lr} must be a positive float")
+
+        if min_lr <= 0:
+            raise ValueError(f"'min_lr' of {min_lr} must be a positive float")
+
+        if base_lr < min_lr:
+            raise ValueError(f"'base_lr' of {base_lr} must be greater that 'min_lr' of {min_lr}")
 
         if warmup_ratio <= 0 or warmup_ratio > 1:
             raise ValueError(f"'warmup_ratio' of {warmup_ratio} must be in the range (0, 1]")
@@ -123,7 +131,8 @@ class TrainingConfig:
         self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer = optimizer # type: ignore
-        self.lr = lr
+        self.base_lr = base_lr
+        self.min_lr = min_lr
         self.warmup_ratio = warmup_ratio
         self.checkpoint_dir = checkpoint_dir
         self.model_name = model_name
@@ -185,7 +194,8 @@ class Config:
         epochs = take_item(training, "epochs", int)
         batch_size = take_item(training, "batch_size", int)
         optimizer = take_item(training, "optimizer", str)
-        lr = take_item(training, "lr", float)
+        base_lr = take_item(training, "base_lr", float)
+        min_lr = take_item(training, "min_lr", float)
         warmup_ratio = take_item(training, "warmup_ratio", float)
         checkpoint_dir = take_item(training, "checkpoint_dir", str)
         model_name = take_item(training, "model_name", str)
@@ -207,7 +217,8 @@ class Config:
             epochs,
             batch_size,
             optimizer,
-            lr,
+            base_lr,
+            min_lr,
             warmup_ratio,
             checkpoint_dir,
             model_name,

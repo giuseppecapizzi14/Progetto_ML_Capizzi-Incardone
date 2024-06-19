@@ -7,13 +7,14 @@ model:
   dropout: 0.2
 
 training:
-  epochs: 20
+  epochs: 40
   batch_size: 16
   optimizer: adam
-  lr: 0.005
+  base_lr: 0.005
+  min_lr: 0.001
   warmup_ratio: 0.3
   checkpoint_dir: checkpoints/
   model_name: best_model
-  device: mps
+  device: cuda
   evaluation_metric: accuracy
   best_metric_lower_is_better: false

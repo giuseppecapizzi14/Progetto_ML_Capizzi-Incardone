@@ -58,7 +58,7 @@ def evaluate(
             running_loss += loss.item()
 
             pred = torch.argmax(outputs, dim=1)
-            predictions.extend(pred.cpu().numpy())
-            references.extend(labels.cpu().numpy())
+            predictions.extend(pred.cpu().tolist()) # type: ignore
+            references.extend(labels.cpu().tolist()) # type: ignore
 
     return compute_metrics(references, predictions, running_loss, len(dataloader))
