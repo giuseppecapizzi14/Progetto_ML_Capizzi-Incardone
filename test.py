@@ -2,40 +2,31 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 
-from config.config import args
+from config.config import Config
 from data_classes.emovo_dataset import EmovoDataset
 from metrics import evaluate
 from model_classes.cnn_model import EmovoCNN
 
 if __name__ == "__main__":
     # Legge in file di configurazione
-    config = args()
+    config = Config()
 
-    # Carica il device da utilizzare tra CUDA, MPS e CPU
-    device = config["training"]["device"]
-    if device == "cuda" and torch.cuda.is_available():
-        device = torch.device("cuda")
-    elif device == "mps" and torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
+    device = config.training.device
 
-    # Caricamento Dataset
-    data_dir = config["data"]["data_dir"]
-    test_dataset = EmovoDataset(data_dir, train=False, resample=True)
+    # Carica dataset
+    dataset = EmovoDataset(config.data.data_dir, resample=True)
 
-    # Crea il DataLoader
-    batch_size = config["training"]["batch_size"]
-    test_dl = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
+    # Crea i DataLoader
+    batch_size = config.training.batch_size
+    test_dl = DataLoader(dataset, batch_size = batch_size, shuffle = False)
 
     # Crea il modello
-    dropout = config["model"]["dropout"]
-    model = EmovoCNN(waveform_size = test_dataset.max_sample_len, dropout = dropout, device = device)
+    model = EmovoCNN(waveform_size = dataset.max_sample_len, dropout = config.model.dropout, device = device)
     model.to(device)
 
     # Carica il modello precedentemente salvato in fase di train
-    checkpoint_dir = config["training"]["checkpoint_dir"]
-    model_name = config['training']['model_name']
+    checkpoint_dir = config.training.checkpoint_dir
+    model_name = config.training.model_name
     model_state = torch.load(f"{checkpoint_dir}/{model_name}.pt") # type: ignore
     model.load_state_dict(model_state)
 

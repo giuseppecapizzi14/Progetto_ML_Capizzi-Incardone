@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score  # type: ignore
@@ -8,6 +8,13 @@ from tqdm import tqdm
 
 from data_classes.emovo_dataset import Sample
 
+EvaluationMetric = Literal[
+    "accuracy",
+    "precision",
+    "recall",
+    "f1",
+    "loss",
+]
 
 class Metrics(TypedDict):
     accuracy: float

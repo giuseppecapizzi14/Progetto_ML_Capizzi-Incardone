@@ -12,7 +12,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from config.config import args
+from config.config import Config
 from data_classes.emovo_dataset import EmovoDataset, Sample
 from extract_representetion.audio_embeddings import AudioEmbeddings
 
@@ -45,33 +45,27 @@ def extract_embeddings_and_labels(
 
 if __name__ == "__main__":
     # Legge il file di configurazione
-    config = args()
-
-    # Carica il Dataset
-    data_dir = config["data"]["data_dir"]
-    train_dataset = EmovoDataset(data_dir, train = True, resample = True)
-    test_dataset = EmovoDataset(data_dir, train = False, resample = True)
+    config = Config()
 
     # Carica il device da utilizzare tra CUDA, MPS e CPU
-    device = config["training"]["device"]
-    if device == "cuda" and torch.cuda.is_available():
-        device = torch.device("cuda")
-    elif device == "mps" and torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
+    device = config.training.device
 
-    print(f"Device: {device}")
+    # Carica il dataset
+    dataset = EmovoDataset(config.data.data_dir, resample=True)
 
-    # Calcola le dimensioni del Set di Train e del Set di Validation
-    train_ratio = config["data"]["train_ratio"]
-    train_size = int(train_ratio * len(train_dataset))
-    train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_size, len(train_dataset) - train_size])
+    # Calcola le dimensioni dei dataset
+    # |------- dataset -------|
+    # |---train---|---test----|
+    dataset_size = len(dataset)
+
+    train_size = int(config.data.train_ratio * dataset_size)
+    test_size = dataset_size - train_size
+
+    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
 
     # Crea i DataLoader
-    batch_size = config["training"]["batch_size"]
+    batch_size = config.training.batch_size
     train_dl = DataLoader(train_dataset, batch_size = batch_size, shuffle = True)
-    val_dl = DataLoader(val_dataset, batch_size = batch_size, shuffle = False)
     test_dl = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
 
     # Crea un'instanza della funzione di embeddings
@@ -81,6 +75,7 @@ if __name__ == "__main__":
     train_embeddings, train_labels = extract_embeddings_and_labels(train_dl, embeddings_extractor)
     test_embeddings, test_labels = extract_embeddings_and_labels(test_dl, embeddings_extractor)
 
+    print(f"Device: {device}")
     print(train_embeddings.shape)
     print(train_labels.shape)
     print(test_embeddings.shape)
@@ -95,17 +90,17 @@ if __name__ == "__main__":
     svm_classifier = SVC(kernel = "linear", C = 1, random_state = 42)
     svm_classifier.fit(train_embeddings, train_labels) # type: ignore
 
-    # Predizioni sul set di training
-    train_predictions = svm_classifier.predict(train_embeddings) # type: ignore
+    # # Predizioni sul set di test
+    # train_predictions = svm_classifier.predict(test_embeddings) # type: ignore
 
-    # Calcola le metriche di valutazione sul set di training
-    train_accuracy = accuracy_score(train_labels, train_predictions)
-    train_class_report = classification_report(train_labels, train_predictions) # type: ignore
-    train_conf_matrix = confusion_matrix(train_labels, train_predictions) # type: ignore
+    # # Calcola le metriche di valutazione sul set di training
+    # train_accuracy = accuracy_score(train_labels, train_predictions)
+    # train_class_report = classification_report(train_labels, train_predictions) # type: ignore
+    # train_conf_matrix = confusion_matrix(train_labels, train_predictions) # type: ignore
 
-    print(f"Train Accuracy: {train_accuracy}")
-    print(f"Train Classification Report:\n{train_class_report}")
-    print(f"Train Confusion Matrix:\n{train_conf_matrix}")
+    # print(f"Train Accuracy: {train_accuracy}")
+    # print(f"Train Classification Report:\n{train_class_report}")
+    # print(f"Train Confusion Matrix:\n{train_conf_matrix}")
 
     # Predizioni sul set di test
     test_predictions = svm_classifier.predict(test_embeddings) # type: ignore
