@@ -55,18 +55,6 @@ if __name__ == "__main__":
     svm_classifier = SVC(kernel = "linear", C = 1, random_state = 42)
     svm_classifier.fit(train_embeddings, train_labels) # type: ignore
 
-    # # Predizioni sul set di test
-    # train_predictions = svm_classifier.predict(test_embeddings) # type: ignore
-
-    # # Calcola le metriche di valutazione sul set di training
-    # train_accuracy = accuracy_score(train_labels, train_predictions)
-    # train_class_report = classification_report(train_labels, train_predictions) # type: ignore
-    # train_conf_matrix = confusion_matrix(train_labels, train_predictions) # type: ignore
-
-    # print(f"Train Accuracy: {train_accuracy}")
-    # print(f"Train Classification Report:\n{train_class_report}")
-    # print(f"Train Confusion Matrix:\n{train_conf_matrix}")
-
     # Predizioni sul set di test
     test_predictions = svm_classifier.predict(test_embeddings) # type: ignore
 
