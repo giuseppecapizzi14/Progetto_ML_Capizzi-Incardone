@@ -37,7 +37,7 @@ adibiti alla configurazione degli iperparametri del modello, ovvero:
 
 - **data**: parametri di configurazione del dataset
 
-    | nome               | tipo  |  valori accettati  | descrizione                                                                      |
+    | Nome               | Tipo  |  Valori accettati  | Descrizione                                                                      |
     | :----------------- | :---- | :----------------: | :------------------------------------------------------------------------------- |
     | **train_ratio**    | float |      \[0, 1]       | proporzione di divisione del dataset in train e test/validazione                 |
     | **test_val_ratio** | float |      \[0, 1]       | proporzione di divisione del dataset in test e validazione                       |
@@ -45,13 +45,13 @@ adibiti alla configurazione degli iperparametri del modello, ovvero:
 
 - **model**: parametri di configurazione del modello
 
-    | nome        | tipo  | valori accettati | descrizione                                              |
+    | Nome        | Tipo  | Valori accettati | Descrizione                                              |
     | :---------- | :---- | :--------------: | :------------------------------------------------------- |
     | **dropout** | float |     \[0, 1]      | percentuale dropout da applicare tra un layer e un altro |
 
 - **training**: parametri di configurazione durante il training
 
-    | nome                            | tipo  |                                       valori accettati                                        | descrizione                                                                                                                                            |
+    | Nome                            | Tipo  |                                       Valori accettati                                        | Descrizione                                                                                                                                            |
     | :------------------------------ | :---- | :-------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
     | **epochs**                      | int   |                                                                                               | epoche per cui addestrare il modello                                                                                                                   |
     | **batch_size**                  | int   |                                                                                               | dimensione delle singole batch con cui addestrare il modello                                                                                           |
@@ -78,7 +78,7 @@ caricare i file audio grezzi.
 
 La classe richiede i seguenti parametri di inizializzazione:
 
-| nome          | tipo | default | descrizione                                                                                                   |
+| Nome          | Tipo | Default | Descrizione                                                                                                   |
 | :------------ | :--- | :------ | :------------------------------------------------------------------------------------------------------------ |
 | **data_path** | str  |         | il precorso della directory in cui cercare i file audio (precedentemente scaricati nella directory `dataset`) |
 | **train**     | bool | True    | se il modello verrà utilizzato durante fase di addestramento o durante la fase di test                        |
@@ -114,7 +114,7 @@ andrà a:
 
 Infine ritornerà un'istanza della classe `Sample`, ovvero un dizionario contenente i seguenti campi:
 
-| nome            | tipo         | descrizione                                                                                                                  |
+| Nome            | Tipo         | Descrizione                                                                                                                  |
 | :-------------- | :----------- | :--------------------------------------------------------------------------------------------------------------------------- |
 | **waveform**    | torch.Tensor | il tensore che ci descrive in maniera grezza la forma d'onda del file audio                                                  |
 | **sample_rate** | int          | il sample rate della forma d'onda del file audio grezzo                                                                      |
@@ -130,7 +130,7 @@ implementata con la classe `EmovoCNN` secondo l'architettura descritta in
 
 La classe richiede i seguenti parametri di inizializzazione:
 
-| nome              | tipo         | valori accettati                                               | descrizione                                                                                   |
+| Dome              | Tipo         | Valori accettati                                               | Descrizione                                                                                   |
 | :---------------- | :----------- | :------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
 | **waveform_size** | int          |                                                                | la dimensione della waveform che andrà analizzata dal modello, ovvero l'input al primo strato |
 | **dropout**       | float        | \[0, 1]                                                        | percentuale dropout da applicare tra un layer e un altro                                      |
