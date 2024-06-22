@@ -25,7 +25,7 @@ class EmovoCNN(Module):
         # Primo strato convoluzionale sequenziale
         self.conv1 = Sequential(
             Conv1d(in_channels = 2, out_channels = 8, kernel_size = conv1_kernel_size, stride = conv1_stride, device = device),
-            BatchNorm1d(num_features = 8),
+            BatchNorm1d(num_features = 8, device = device),
             ReLU(),
             MaxPool1d(kernel_size = pool1_kernel_size, stride = pool1_stride),
             Dropout(dropout)
@@ -44,7 +44,7 @@ class EmovoCNN(Module):
         # Secondo strato convoluzionale sequenziale
         self.conv2 = Sequential(
             Conv1d(in_channels = 8, out_channels = 16, kernel_size = conv2_kernel_size, stride = conv2_stride, device = device),
-            BatchNorm1d(num_features = 16),
+            BatchNorm1d(num_features = 16, device = device),
             ReLU(),
             MaxPool1d(kernel_size = pool2_kernel_size, stride = pool2_stride),
             Dropout(dropout)
@@ -63,7 +63,7 @@ class EmovoCNN(Module):
         # Terzo strato convoluzionale sequenziale
         self.conv3 = Sequential(
             Conv1d(in_channels = 16, out_channels = 32, kernel_size = conv3_kernel_size, stride = conv3_stride, device = device),
-            BatchNorm1d(num_features = 32),
+            BatchNorm1d(num_features = 32, device = device),
             ReLU(),
             MaxPool1d(kernel_size = pool3_kernel_size, stride = pool3_stride),
             Dropout(dropout)
@@ -82,7 +82,7 @@ class EmovoCNN(Module):
         # Quarto strato convoluzionale sequenziale
         self.conv4 = Sequential(
             Conv1d(in_channels = 32, out_channels = 64, kernel_size = conv4_kernel_size, stride = conv4_stride, device = device),
-            BatchNorm1d(num_features = 64),
+            BatchNorm1d(num_features = 64, device = device),
             ReLU(),
             MaxPool1d(kernel_size = pool4_kernel_size, stride = pool4_stride),
             Dropout(dropout)
@@ -101,7 +101,7 @@ class EmovoCNN(Module):
         # Quinto strato convoluzionale sequenziale
         self.conv5 = Sequential(
             Conv1d(in_channels = 64, out_channels = 128, kernel_size = conv5_kernel_size, stride = conv5_stride, device = device),
-            BatchNorm1d(num_features = 128),
+            BatchNorm1d(num_features = 128, device = device),
             ReLU(),
             MaxPool1d(kernel_size = pool5_kernel_size, stride = pool5_stride),
             Dropout(dropout)
@@ -112,8 +112,6 @@ class EmovoCNN(Module):
             # Numero di unità in input: 64 canali * lunghezza del segnale dopo il pooling
             Linear(in_features = 128 * self.sample_len, out_features = 128, device = device),
             ReLU(),
-            # Dropout per ridurre l'overfitting
-            Dropout(dropout)
         )
 
         # Secondo strato completamente connesso (output)
@@ -128,7 +126,7 @@ class EmovoCNN(Module):
         x = self.conv5(x)
 
         # Riformatta l'output per il passaggio attraverso i layer completamente connessi
-        x = x.view(-1, 128 * self.sample_len)
+        x = x.flatten(1)
 
         # Passaggio attraverso gli strati completamente connessi
         x = self.fc1(x)
