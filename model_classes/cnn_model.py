@@ -51,9 +51,16 @@ class EmovoCNN(Module):
 
         # Calcoliamo la dimensione dell'output di tutti gli strati convoluzionali
         self.sample_len = waveform_size
+
+        # Teniamo traccia dell'ultimo strato convoluzionale per calcolare la dimensione dell'input
+        # degli strati fully-connected
+        last_conv_layer: Conv1d | None = None
+
         for layer in self.feature_extraction.modules():
             match layer:
                 case Conv1d():
+                    last_conv_layer = layer
+
                     padding: int = layer.padding[0] # type: ignore
                     kernel_size = layer.kernel_size[0]
                     stride = layer.stride[0]
@@ -68,10 +75,14 @@ class EmovoCNN(Module):
                 case _:
                     pass
 
+        assert not last_conv_layer is None, "Almeno uno strato convoluzionale deve essere presente"
+
         self.classification = Sequential(
             # Primo strato completamente connesso
-            Linear(in_features = 256 * self.sample_len, out_features = 128, device = device),
+            Linear(in_features = last_conv_layer.out_channels * self.sample_len, out_features = 128, device = device),
+            BatchNorm1d(num_features = 128, device = device),
             ReLU(inplace = True),
+            Dropout(dropout),
 
             # Secondo strato completamente connesso (output)
             Linear(in_features = 128, out_features = len(EmovoDataset.LABEL_DICT), device = device),
