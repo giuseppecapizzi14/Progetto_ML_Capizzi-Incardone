@@ -117,12 +117,13 @@ class TrainingConfig:
             raise ValueError(f"'checkpoint_dir' of {checkpoint_dir} must be a valid directory path")
 
         # Carica il device da utilizzare tra CUDA, MPS e CPU
-        if device_name == "cuda" and torch.cuda.is_available():
-            device = torch.device("cuda")
-        elif device_name == "mps" and torch.backends.mps.is_available():
-            device = torch.device("mps")
-        else:
-            device = torch.device("cpu")
+        match device_name:
+            case "cuda" if torch.cuda.is_available():
+                device = torch.device("cuda")
+            case "mps" if torch.backends.mps.is_available():
+                device = torch.device("mps")
+            case _:
+                device = torch.device("cpu")
 
         valid_evaluation_metrics = typing.get_args(EvaluationMetric)
         if evaluation_metric not in valid_evaluation_metrics:
@@ -153,12 +154,11 @@ class Config:
             except:
                 raise AttributeError(f"'{attribute_name}' config attribute not found")
 
-            attribute_type: type = type(attribute)
             expected_type_orign: type | None = typing.get_origin(expected_type)
-
             if not expected_type_orign is None:
                 expected_type = expected_type_orign
 
+            attribute_type: type = type(attribute) # type: ignore
             if not attribute_type is expected_type:
                 raise TypeError(f"actual type of '{attribute_name}' of '{attribute_type.__name__}' doesn't match expected type of '{expected_type.__name__}'")
 
