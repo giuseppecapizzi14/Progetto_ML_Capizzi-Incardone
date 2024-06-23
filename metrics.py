@@ -25,30 +25,25 @@ class Metrics(TypedDict):
     loss: float
 
 def print_metrics(*metrics: tuple[str, Metrics]) -> None:
-    max_tag_len = 0
-    for tag, _metric in metrics:
-        tag_len = len(tag)
-        if tag_len > max_tag_len:
-            max_tag_len = tag_len
+    max_tag_len = max(len(tag) for tag, _metric in metrics)
 
     for tag, metric in metrics:
         print(f"{tag: <{max_tag_len}} -> ", end = "")
 
         metric_items: list[tuple[str, float]] = list(metric.items()) # type: ignore
-
         for key, value in metric_items[: -1]:
             print(f"{key}: {value:.4f}, ", end = "")
 
         last_key, last_value = metric_items[-1]
         print(f"{last_key}: {last_value:.4f}")
 
-def compute_metrics(references: list[int], predictions: list[int], running_loss: float, dataset_len: int) -> Metrics:
+def compute_metrics(references: list[int], predictions: list[int], running_loss: float, batch_len: int) -> Metrics:
     return {
         "accuracy": accuracy_score(references, predictions),
         "precision": precision_score(references, predictions, average = "macro"),
         "recall": recall_score(references, predictions, average = "macro"),
         "f1": f1_score(references, predictions, average = "macro"),
-        "loss": running_loss / dataset_len
+        "loss": running_loss / batch_len
     } # type: ignore
 
 def evaluate(
