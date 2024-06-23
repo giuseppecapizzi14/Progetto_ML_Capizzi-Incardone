@@ -24,6 +24,24 @@ class Metrics(TypedDict):
     f1: float
     loss: float
 
+def print_metrics(*metrics: tuple[str, Metrics]) -> None:
+    max_tag_len = 0
+    for tag, _metric in metrics:
+        tag_len = len(tag)
+        if tag_len > max_tag_len:
+            max_tag_len = tag_len
+
+    for tag, metric in metrics:
+        print(f"{tag: <{max_tag_len}} -> ", end = "")
+
+        metric_items: list[tuple[str, float]] = list(metric.items()) # type: ignore
+
+        for key, value in metric_items[: -1]:
+            print(f"{key}: {value:.4f}, ", end = "")
+
+        last_key, last_value = metric_items[-1]
+        print(f"{last_key}: {last_value:.4f}")
+
 def compute_metrics(references: list[int], predictions: list[int], running_loss: float, dataset_len: int) -> Metrics:
     return {
         "accuracy": accuracy_score(references, predictions),

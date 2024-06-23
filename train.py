@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from config.config import OPTIMIZERS, Config
 from data_classes.emovo_dataset import EmovoDataset, Sample
-from metrics import Metrics, compute_metrics, evaluate
+from metrics import Metrics, compute_metrics, evaluate, print_metrics
 from model_classes.cnn_model import EmovoCNN
 
 
@@ -137,13 +137,7 @@ if __name__ == "__main__":
         train_metrics = train_one_epoch(model, train_dl, criterion, scheduler, device)
         val_metrics = evaluate(model, val_dl, criterion, device)
 
-        train_loss = train_metrics["loss"]
-        train_accuracy = train_metrics["accuracy"]
-        val_loss = val_metrics["loss"]
-        val_accuracy = val_metrics["accuracy"]
-
-        print(f"Train loss: {train_loss:.4f} - Train accuracy: {train_accuracy:.4f}")
-        print(f"Val loss: {val_loss:.4f} - Val accuracy: {val_accuracy:.4f}")
+        print_metrics(("Train", train_metrics), ("Val", val_metrics))
 
         metric = val_metrics[evaluation_metric]
         is_best = metric <= best_val_metric if best_metric_lower_is_better else metric > best_val_metric
