@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from config.config import OPTIMIZERS, Config
 from data_classes.emovo_dataset import EmovoDataset, Sample
-from metrics import Metrics, compute_metrics, evaluate, print_metrics
+from metrics import EvaluationMetric, Metrics, compute_metrics, evaluate, print_metrics
 from model_classes.cnn_model import EmovoCNN
 
 import matplotlib.pyplot as plt
@@ -147,10 +147,14 @@ if __name__ == "__main__":
     best_metric_lower_is_better = config.training.best_metric_lower_is_better
     best_val_metric = float("inf") if best_metric_lower_is_better else float("-inf")
     best_model = model
-    
+
     # Liste per tenere traccia delle perdite di training e validation
-    train_losses = []
-    val_losses = []
+    plotting_metrics = config.plotting.metrics
+    train_plot_metrics: dict[EvaluationMetric, list[float]] = {}
+    val_plot_metrics: dict[EvaluationMetric, list[float]] = {}
+    for metric in plotting_metrics:
+        train_plot_metrics[metric] = []
+        val_plot_metrics[metric] = []
 
     # Addestra il modello per il numero di epoche specificate
     evaluation_metric = config.training.evaluation_metric
@@ -164,9 +168,16 @@ if __name__ == "__main__":
 
         print_metrics(("Train", train_metrics), ("Val", val_metrics))
 
-        # Aggiungi le perdite alle liste
-        train_losses.append(train_metrics['loss'])
-        val_losses.append(val_metrics['loss'])
+        # Aggiungi i parametri da plottare alle liste
+        for plotting_metric in plotting_metrics:
+            train_metric = train_metrics[plotting_metric]
+            val_metric = val_metrics[plotting_metric]
+
+            train_plotting_metric = train_plot_metrics[plotting_metric]
+            val_plotting_metric = val_plot_metrics[plotting_metric]
+
+            train_plotting_metric.append(train_metric)
+            val_plotting_metric.append(val_metric)
 
         metric = val_metrics[evaluation_metric]
         is_best = metric <= best_val_metric if best_metric_lower_is_better else metric > best_val_metric
@@ -191,4 +202,8 @@ if __name__ == "__main__":
     print("Model saved")
 
     # Plot delle curve di training e validation loss
-    plot_training_curves(train_losses, val_losses)
+    for plotting_metric in plotting_metrics:
+        train_plotting_metric = train_plot_metrics[plotting_metric]
+        val_plotting_metric = val_plot_metrics[plotting_metric]
+
+        plot_training_curves(train_plotting_metric, val_plotting_metric)

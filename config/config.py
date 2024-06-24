@@ -141,10 +141,25 @@ class TrainingConfig:
         self.evaluation_metric = evaluation_metric # type: ignore
         self.best_metric_lower_is_better = best_metric_lower_is_better
 
+class PlottingConfig:
+    metrics: list[EvaluationMetric]
+
+    def __init__(self, metrics: list[str]) -> None:
+        self.metrics = []
+
+        valid_metrics = typing.get_args(EvaluationMetric)
+        for metric in metrics:
+            if metric not in valid_metrics:
+                raise ValueError(f"evaluation metric `{metric}` must be one of {valid_metrics}")
+
+            evaluation_metric: EvaluationMetric = metric # type: ignore
+            self.metrics.append(evaluation_metric)
+
 class Config:
     data: DataConfig
     model: ModelConfig
     training: TrainingConfig
+    plotting: PlottingConfig
 
     def __init__(self) -> None:
         T = TypeVar("T")
@@ -207,6 +222,8 @@ class Config:
         for key, value in training.items():
             raise ValueError(f"Unrecognized configuration attribute {key}: {value}")
 
+        metrics = take_item(config, "plotting", list[str])
+
         # Controlliamo che non siano presenti attributi non riconosciuti
         for key, value in config.items():
             raise ValueError(f"Unrecognized configuration attribute {key}: {value}")
@@ -226,3 +243,4 @@ class Config:
             evaluation_metric,
             best_metric_lower_is_better
         )
+        self.plotting = PlottingConfig(metrics)
