@@ -1,6 +1,8 @@
 import os
 
 import torch.utils.data
+from matplotlib import pyplot
+from matplotlib.axes import Axes
 from torch import Tensor
 from torch.nn import CrossEntropyLoss, Module
 from torch.optim.lr_scheduler import LambdaLR, LRScheduler
@@ -9,10 +11,8 @@ from tqdm import tqdm
 
 from config.config import OPTIMIZERS, Config
 from data_classes.emovo_dataset import EmovoDataset, Sample
-from metrics import EvaluationMetric, Metrics, compute_metrics, evaluate, print_metrics
+from metrics import Metrics, MetricsHistory, compute_metrics, evaluate, print_metrics
 from model_classes.cnn_model import EmovoCNN
-
-import matplotlib.pyplot as plt
 
 
 def train_one_epoch(
@@ -49,25 +49,6 @@ def train_one_epoch(
         references.extend(labels.cpu().numpy())
 
     return compute_metrics(predictions, references, running_loss, len(dataloader))
-
-def plot_training_curves(train_losses, val_losses):
-    epochs = range(1, len(train_losses) + 1)
-
-    plt.figure(figsize=(10, 5))
-
-    # Plot delle perdite di training e validation
-    plt.plot(epochs, train_losses, 'b-', label='Training Loss')
-    plt.plot(epochs, val_losses, 'y-', label='Validation Loss')
-    plt.title('Training and Validation Loss over Epochs')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
-
-    # Mostra la griglia
-    plt.grid(True)
-
-    # Mostra il grafico
-    plt.show()
 
 if __name__ == "__main__":
     # Legge il file di configurazione
@@ -148,13 +129,21 @@ if __name__ == "__main__":
     best_val_metric = float("inf") if best_metric_lower_is_better else float("-inf")
     best_model = model
 
-    # Liste per tenere traccia delle perdite di training e validation
-    plotting_metrics = config.plotting.metrics
-    train_plot_metrics: dict[EvaluationMetric, list[float]] = {}
-    val_plot_metrics: dict[EvaluationMetric, list[float]] = {}
-    for metric in plotting_metrics:
-        train_plot_metrics[metric] = []
-        val_plot_metrics[metric] = []
+    # Teniamo traccia delle metriche di training e validation
+    metrics: MetricsHistory | list[MetricsHistory] | None
+
+    metrics_to_plot = config.plot.metrics
+    match metrics_to_plot:
+        case None:
+            pass
+        case str():
+            metrics = { "metric": metrics_to_plot, "train": [0], "val": [0] }
+        case list():
+            metrics = []
+
+            for metric_to_plot in metrics_to_plot:
+                metric = { "metric": metric_to_plot, "train": [0], "val": [0] }
+                metrics.append(metric)
 
     # Addestra il modello per il numero di epoche specificate
     evaluation_metric = config.training.evaluation_metric
@@ -168,22 +157,33 @@ if __name__ == "__main__":
 
         print_metrics(("Train", train_metrics), ("Val", val_metrics))
 
-        # Aggiungi i parametri da plottare alle liste
-        for plotting_metric in plotting_metrics:
-            train_metric = train_metrics[plotting_metric]
-            val_metric = val_metrics[plotting_metric]
+        # Teniamo traccia delle metriche da plottare
+        match metrics_to_plot:
+            case None:
+                pass
+            case str():
+                metric: MetricsHistory = metrics # type: ignore
 
-            train_plotting_metric = train_plot_metrics[plotting_metric]
-            val_plotting_metric = val_plot_metrics[plotting_metric]
+                train_metric = train_metrics[metrics_to_plot]
+                val_metric = val_metrics[metrics_to_plot]
 
-            train_plotting_metric.append(train_metric)
-            val_plotting_metric.append(val_metric)
+                metric["train"].append(train_metric)
+                metric["val"].append(val_metric)
+            case list():
+                multiple_metrics: list[MetricsHistory] = metrics # type: ignore
+                for metric_history in multiple_metrics:
+                    metric_to_plot = metric_history["metric"]
+                    train_metric = train_metrics[metric_to_plot]
+                    val_metric = val_metrics[metric_to_plot]
 
-        metric = val_metrics[evaluation_metric]
-        is_best = metric <= best_val_metric if best_metric_lower_is_better else metric > best_val_metric
+                    metric_history["train"].append(train_metric)
+                    metric_history["val"].append(val_metric)
+
+        val_metric = val_metrics[evaluation_metric]
+        is_best = val_metric <= best_val_metric if best_metric_lower_is_better else val_metric > best_val_metric
         if is_best:
-            print(f"New best model found with val {evaluation_metric}: {metric:.4f}")
-            best_val_metric = metric
+            print(f"New best model found with val {evaluation_metric}: {val_metric:.4f}")
+            best_val_metric = val_metric
             best_model = model
 
         print()
@@ -201,9 +201,54 @@ if __name__ == "__main__":
 
     print("Model saved")
 
-    # Plot delle curve di training e validation loss
-    for plotting_metric in plotting_metrics:
-        train_plotting_metric = train_plot_metrics[plotting_metric]
-        val_plotting_metric = val_plot_metrics[plotting_metric]
+    # Plot delle metriche di training e validation
+    epochs_steps = range(0, epochs + 1)
 
-        plot_training_curves(train_plotting_metric, val_plotting_metric)
+    match metrics_to_plot:
+        case None:
+            pass
+        case str():
+            metric: MetricsHistory = metrics # type: ignore
+            metric_to_plot = metric["metric"]
+
+            pyplot.figure(num = "Train and Validation metrics over epochs") # type: ignore
+            pyplot.title(f"{metric_to_plot}") # type: ignore
+
+            pyplot.plot(metric["train"], "b-", label = "Train") # type: ignore
+            pyplot.plot(metric["val"], "y-", label = "Validation") # type: ignore
+
+            pyplot.xlabel("epochs") # type: ignore
+            pyplot.xlim(left = 0) # type: ignore
+            pyplot.xticks(epochs_steps) # type: ignore
+
+            pyplot.ylabel(f"{metric_to_plot}") # type: ignore
+
+            pyplot.legend() # type: ignore
+            pyplot.grid(True) # type: ignore
+        case list():
+            multiple_metrics: list[MetricsHistory] = metrics # type: ignore
+
+            metrics_count = len(multiple_metrics)
+            figure, plots = pyplot.subplots(metrics_count, num = "Train and Validation metrics over epochs", constrained_layout = True) # type: ignore
+            plots: list[Axes]
+
+            for metric, plot in zip(multiple_metrics, plots):
+                metric_to_plot = metric["metric"]
+
+                plot.set_title(f"{metric_to_plot}") # type: ignore
+
+                plot.plot(metric["train"], "b-", label = "Train") # type: ignore
+                plot.plot(metric["val"], "y-", label = "Validation") # type: ignore
+
+                plot.set_xlim(left = 0)
+
+                plot.set_ylabel(f"{metric_to_plot}") # type: ignore
+
+                plot.legend() # type: ignore
+                plot.grid(True) # type: ignore
+
+            last_plot = plots[-1]
+            last_plot.set_xticks(epochs_steps)
+            last_plot.set_xlabel("epochs") # type: ignore
+
+    pyplot.show() # type: ignore

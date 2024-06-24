@@ -9,6 +9,41 @@ from yaml_config_override import add_arguments  # type: ignore
 
 from metrics import EvaluationMetric
 
+OptimizerName = Literal[
+    "adadelta",
+    "adagrad",
+    "adamax",
+    "adamw",
+    "adam",
+    "asgd",
+    "lbfgs",
+    "nadam",
+    "radam",
+    "rmsprop",
+    "rprop",
+    "sgd",
+    "sparse_adam"
+]
+
+ValidOptimizerNames = typing.get_args(OptimizerName)
+
+OPTIMIZERS = {
+    "adadelta": Adadelta,
+    "adagrad": Adagrad,
+    "adamax": Adamax,
+    "adamw": AdamW,
+    "adam": Adam,
+    "asgd": ASGD,
+    "lbfgs": LBFGS,
+    "nadam": NAdam,
+    "radam": RAdam,
+    "rmsprop": RMSprop,
+    "rprop": Rprop,
+    "sgd": SGD,
+    "sparse_adam": SparseAdam,
+}
+
+ValidEvaluationMetrics = typing.get_args(EvaluationMetric)
 
 class DataConfig:
     train_ratio: float
@@ -38,42 +73,10 @@ class ModelConfig:
 
         self.dropout = dropout
 
-OptimizerKind = Literal[
-    "adadelta",
-    "adagrad",
-    "adamax",
-    "adamw",
-    "adam",
-    "asgd",
-    "lbfgs",
-    "nadam",
-    "radam",
-    "rmsprop",
-    "rprop",
-    "sgd",
-    "sparse_adam"
-]
-
-OPTIMIZERS = {
-    "adadelta": Adadelta,
-    "adagrad": Adagrad,
-    "adamax": Adamax,
-    "adamw": AdamW,
-    "adam": Adam,
-    "asgd": ASGD,
-    "lbfgs": LBFGS,
-    "nadam": NAdam,
-    "radam": RAdam,
-    "rmsprop": RMSprop,
-    "rprop": Rprop,
-    "sgd": SGD,
-    "sparse_adam": SparseAdam,
-}
-
 class TrainingConfig:
     epochs: int
     batch_size: int
-    optimizer: OptimizerKind
+    optimizer: OptimizerName
     base_lr: float
     min_lr: float
     warmup_ratio: float
@@ -97,9 +100,11 @@ class TrainingConfig:
         evaluation_metric: str,
         best_metric_lower_is_better: bool
     ) -> None:
-        valid_optimizers = OPTIMIZERS.keys()
-        if optimizer not in valid_optimizers:
-            raise ValueError(f"'{optimizer}' must be one of {valid_optimizers}")
+        if batch_size <= 1:
+            raise ValueError(f"`batch_size` must be greater than 1")
+
+        if optimizer not in ValidOptimizerNames:
+            raise ValueError(f"'{optimizer}' must be one of {ValidOptimizerNames}")
 
         if base_lr <= 0:
             raise ValueError(f"'base_lr' of {base_lr} must be a positive float")
@@ -125,9 +130,8 @@ class TrainingConfig:
             case _:
                 device = torch.device("cpu")
 
-        valid_evaluation_metrics = typing.get_args(EvaluationMetric)
-        if evaluation_metric not in valid_evaluation_metrics:
-            raise ValueError(f"'evaluation_metric' of '{evaluation_metric}' must be one of {valid_evaluation_metrics}")
+        if evaluation_metric not in ValidEvaluationMetrics:
+            raise ValueError(f"'evaluation_metric' of '{evaluation_metric}' must be one of {ValidEvaluationMetrics}")
 
         self.epochs = epochs
         self.batch_size = batch_size
@@ -141,25 +145,35 @@ class TrainingConfig:
         self.evaluation_metric = evaluation_metric # type: ignore
         self.best_metric_lower_is_better = best_metric_lower_is_better
 
-class PlottingConfig:
-    metrics: list[EvaluationMetric]
+class PlotConfig:
+    metrics: EvaluationMetric | list[EvaluationMetric] | None
 
-    def __init__(self, metrics: list[str]) -> None:
-        self.metrics = []
+    def __init__(self, metrics: str | list[str] | None) -> None:
+        def validate_metric(metric: str) -> EvaluationMetric:
+            if metric not in ValidEvaluationMetrics:
+                raise ValueError(f"evaluation metric `{metrics}` must be one of {ValidEvaluationMetrics}")
+            return metric # type: ignore
 
-        valid_metrics = typing.get_args(EvaluationMetric)
-        for metric in metrics:
-            if metric not in valid_metrics:
-                raise ValueError(f"evaluation metric `{metric}` must be one of {valid_metrics}")
-
-            evaluation_metric: EvaluationMetric = metric # type: ignore
-            self.metrics.append(evaluation_metric)
+        match metrics:
+            case None:
+                self.metrics = None
+            case str():
+                self.metrics = validate_metric(metrics)
+            case list():
+                if len(metrics) == 1:
+                    metric = metrics[0]
+                    self.metrics = validate_metric(metric)
+                else:
+                    self.metrics = []
+                    for metric in metrics:
+                        metric = validate_metric(metric)
+                        self.metrics.append(metric)
 
 class Config:
     data: DataConfig
     model: ModelConfig
     training: TrainingConfig
-    plotting: PlottingConfig
+    plot: PlotConfig
 
     def __init__(self) -> None:
         T = TypeVar("T")
@@ -222,7 +236,12 @@ class Config:
         for key, value in training.items():
             raise ValueError(f"Unrecognized configuration attribute {key}: {value}")
 
-        metrics = take_item(config, "plotting", list[str])
+        try:
+            metrics = take_item(config, "plot", str)
+        except AttributeError:
+            metrics = None
+        except TypeError:
+            metrics = take_item(config, "plot", list[str])
 
         # Controlliamo che non siano presenti attributi non riconosciuti
         for key, value in config.items():
@@ -243,4 +262,4 @@ class Config:
             evaluation_metric,
             best_metric_lower_is_better
         )
-        self.plotting = PlottingConfig(metrics)
+        self.plot = PlotConfig(metrics)

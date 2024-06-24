@@ -24,6 +24,11 @@ class Metrics(TypedDict):
     f1: float
     loss: float
 
+class MetricsHistory(TypedDict):
+    metric: EvaluationMetric
+    train: list[float]
+    val: list[float]
+
 def print_metrics(*metrics: tuple[str, Metrics]) -> None:
     max_tag_len = max(len(tag) for tag, _metric in metrics)
 
