@@ -56,13 +56,17 @@ def plot_training_curves(train_losses, val_losses):
     plt.figure(figsize=(10, 5))
 
     # Plot delle perdite di training e validation
-    plt.plot(epochs, train_losses, 'bo-', label='Training Loss')
-    plt.plot(epochs, val_losses, 'ro-', label='Validation Loss')
-    plt.title('Training and Validation Loss')
+    plt.plot(epochs, train_losses, 'b-', label='Training Loss')
+    plt.plot(epochs, val_losses, 'y-', label='Validation Loss')
+    plt.title('Training and Validation Loss over Epochs')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
 
+    # Mostra la griglia
+    plt.grid(True)
+
+    # Mostra il grafico
     plt.show()
 
 if __name__ == "__main__":
