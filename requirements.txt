@@ -5,3 +5,4 @@ torchaudio
 tqdm
 gdown
 transformers
+matplotlib

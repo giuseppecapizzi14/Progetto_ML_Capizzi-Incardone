@@ -12,6 +12,8 @@ from data_classes.emovo_dataset import EmovoDataset, Sample
 from metrics import Metrics, compute_metrics, evaluate, print_metrics
 from model_classes.cnn_model import EmovoCNN
 
+import matplotlib.pyplot as plt
+
 
 def train_one_epoch(
     model: Module,
@@ -47,6 +49,21 @@ def train_one_epoch(
         references.extend(labels.cpu().numpy())
 
     return compute_metrics(predictions, references, running_loss, len(dataloader))
+
+def plot_training_curves(train_losses, val_losses):
+    epochs = range(1, len(train_losses) + 1)
+
+    plt.figure(figsize=(10, 5))
+
+    # Plot delle perdite di training e validation
+    plt.plot(epochs, train_losses, 'bo-', label='Training Loss')
+    plt.plot(epochs, val_losses, 'ro-', label='Validation Loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    plt.show()
 
 if __name__ == "__main__":
     # Legge il file di configurazione
@@ -126,6 +143,10 @@ if __name__ == "__main__":
     best_metric_lower_is_better = config.training.best_metric_lower_is_better
     best_val_metric = float("inf") if best_metric_lower_is_better else float("-inf")
     best_model = model
+    
+    # Liste per tenere traccia delle perdite di training e validation
+    train_losses = []
+    val_losses = []
 
     # Addestra il modello per il numero di epoche specificate
     evaluation_metric = config.training.evaluation_metric
@@ -138,6 +159,10 @@ if __name__ == "__main__":
         val_metrics = evaluate(model, val_dl, criterion, device)
 
         print_metrics(("Train", train_metrics), ("Val", val_metrics))
+
+        # Aggiungi le perdite alle liste
+        train_losses.append(train_metrics['loss'])
+        val_losses.append(val_metrics['loss'])
 
         metric = val_metrics[evaluation_metric]
         is_best = metric <= best_val_metric if best_metric_lower_is_better else metric > best_val_metric
@@ -160,3 +185,6 @@ if __name__ == "__main__":
     torch.save(best_model.state_dict(), f"{checkpoint_dir}/{model_name}.pt") # type: ignore
 
     print("Model saved")
+
+    # Plot delle curve di training e validation loss
+    plot_training_curves(train_losses, val_losses)
