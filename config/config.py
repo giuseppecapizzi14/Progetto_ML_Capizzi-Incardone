@@ -3,8 +3,8 @@ import typing
 from typing import Any, Literal, TypeVar
 
 import torch
-from torch.optim import (ASGD, LBFGS, SGD, Adadelta, Adagrad, Adam, Adamax, AdamW, NAdam, RAdam,
-                         RMSprop, Rprop, SparseAdam)
+from torch.optim import (ASGD, LBFGS, SGD, Adadelta, Adagrad, Adam, Adamax, AdamW, NAdam, RAdam, RMSprop, Rprop,
+                         SparseAdam)
 from yaml_config_override import add_arguments  # type: ignore
 
 from metrics import EvaluationMetric

@@ -54,7 +54,6 @@ class EmovoDataset(Dataset[Sample]):
                     continue
 
                 audio_path = os.path.join(dir_path, file_name)
-
                 waveform, _sample_rate = torchaudio.load(audio_path) # type: ignore
 
                 # Registriamo la traccia audio con la dimensione massima

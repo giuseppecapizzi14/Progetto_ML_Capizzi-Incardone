@@ -23,7 +23,7 @@ def train_one_epoch(
     device: torch.device
 ) -> Metrics:
     model.train()
-    running_loss = 0.0
+    total_loss = 0.0
     predictions: list[int] = []
     references: list[int] = []
 
@@ -39,16 +39,16 @@ def train_one_epoch(
         outputs: Tensor = model(waveforms)
         loss: Tensor = loss_criterion(outputs, labels)
         loss.backward() # type: ignore
+        total_loss += loss.item()
+
         scheduler.optimizer.step()
         scheduler.step()
-
-        running_loss += loss.item()
 
         pred = torch.argmax(outputs, dim = 1)
         predictions.extend(pred.cpu().numpy())
         references.extend(labels.cpu().numpy())
 
-    return compute_metrics(predictions, references, running_loss, len(dataloader))
+    return compute_metrics(predictions, references, total_loss, len(dataloader))
 
 if __name__ == "__main__":
     # Legge il file di configurazione
@@ -63,13 +63,10 @@ if __name__ == "__main__":
     # |------- dataset -------|
     # |---train---|-val-|-test|
     dataset_size = len(dataset)
-
     train_size = int(config.data.train_ratio * dataset_size)
-
     test_val_size = dataset_size - train_size
     test_size = int(test_val_size * config.data.test_val_ratio)
     val_size = test_val_size - test_size
-
     train_dataset, test_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size, val_size])
 
     # Crea i DataLoader
@@ -88,11 +85,10 @@ if __name__ == "__main__":
     # Definisce uno scheduler per il decay del learning rate
     epochs = config.training.epochs
     total_steps = len(train_dl) * epochs
+    warmup_steps = int(total_steps * config.training.warmup_ratio)
 
     max_lr = config.training.max_lr
     min_lr = config.training.min_lr
-
-    warmup_steps = int(total_steps * config.training.warmup_ratio)
 
     def lr_warmup_linear_decay(step: int) -> float:
         if step < warmup_steps:
@@ -114,7 +110,6 @@ if __name__ == "__main__":
     optimizer = config.training.optimizer
     optimizer = OPTIMIZERS[optimizer]
     optimizer = optimizer(model.parameters(), lr = max_lr)
-
     scheduler = LambdaLR(optimizer, lr_lambda = lr_warmup_linear_decay)
 
     # Stampa le informazioni sul processo di training
@@ -163,21 +158,14 @@ if __name__ == "__main__":
                 pass
             case str():
                 metric: MetricsHistory = metrics # type: ignore
-
-                train_metric = train_metrics[metrics_to_plot]
-                val_metric = val_metrics[metrics_to_plot]
-
-                metric["train"].append(train_metric)
-                metric["val"].append(val_metric)
+                metric["train"].append(train_metrics[metrics_to_plot])
+                metric["val"].append(val_metrics[metrics_to_plot])
             case list():
                 multiple_metrics: list[MetricsHistory] = metrics # type: ignore
                 for metric_history in multiple_metrics:
                     metric_to_plot = metric_history["metric"]
-                    train_metric = train_metrics[metric_to_plot]
-                    val_metric = val_metrics[metric_to_plot]
-
-                    metric_history["train"].append(train_metric)
-                    metric_history["val"].append(val_metric)
+                    metric_history["train"].append(train_metrics[metric_to_plot])
+                    metric_history["val"].append(val_metrics[metric_to_plot])
 
         # Teniamo traccia della metrica considerata migliore, e salva il modello che massimizza/minimizza
         val_metric = val_metrics[evaluation_metric]
@@ -202,7 +190,6 @@ if __name__ == "__main__":
 
     print("Model saved")
 
-
     match metrics_to_plot:
         case None:
             pass
@@ -213,18 +200,16 @@ if __name__ == "__main__":
             metric: MetricsHistory = metrics # type: ignore
             metric_to_plot = metric["metric"]
 
-            pyplot.figure(num = "Train and Validation metrics over epochs") # type: ignore
-            pyplot.title(f"{metric_to_plot}") # type: ignore
-
             pyplot.plot(metric["train"], "b-", label = "Train") # type: ignore
             pyplot.plot(metric["val"], "y-", label = "Validation") # type: ignore
 
             pyplot.xlabel("epochs") # type: ignore
             pyplot.xlim(left = 0) # type: ignore
             pyplot.xticks(epochs_steps) # type: ignore
-
             pyplot.ylabel(f"{metric_to_plot}") # type: ignore
 
+            pyplot.figure(num = "Train and Validation metrics over epochs") # type: ignore
+            pyplot.title(f"{metric_to_plot}") # type: ignore
             pyplot.legend() # type: ignore
             pyplot.grid(True) # type: ignore
         case list():
@@ -240,15 +225,13 @@ if __name__ == "__main__":
             for metric, plot in zip(multiple_metrics, plots):
                 metric_to_plot = metric["metric"]
 
-                plot.set_title(f"{metric_to_plot}") # type: ignore
-
                 plot.plot(metric["train"], "b-", label = "Train") # type: ignore
                 plot.plot(metric["val"], "y-", label = "Validation") # type: ignore
 
                 plot.set_xlim(left = 0)
-
                 plot.set_ylabel(f"{metric_to_plot}") # type: ignore
 
+                plot.set_title(f"{metric_to_plot}") # type: ignore
                 plot.legend() # type: ignore
                 plot.grid(True) # type: ignore
 

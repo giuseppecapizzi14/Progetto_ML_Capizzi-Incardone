@@ -26,13 +26,9 @@ class AudioEmbeddings:
     def __init__(self, device: torch.device, model_name: str = "ALM/hubert-base-audioset"):
         self.processor: Wav2Vec2FeatureExtractor = AutoFeatureExtractor.from_pretrained(model_name) # type: ignore
         self.model: PreTrainedModel = AutoModel.from_pretrained(model_name) # type: ignore
-
         self.device = device
+
         self.model.to(self.device) # type: ignore
-
-        self.model_name = model_name
-
-        # eval mode
         self.model.eval() # type: ignore
 
     def extract_embeddings_and_labels(self, dataloader: DataLoader[Sample]) -> tuple[NDArray[Any], NDArray[int64]]:
@@ -66,5 +62,4 @@ class AudioEmbeddings:
 
         embeddings_array = numpy.vstack(embeddings_list) # type: ignore
         labels_array = numpy.array(labels_list)
-
         return embeddings_array, labels_array

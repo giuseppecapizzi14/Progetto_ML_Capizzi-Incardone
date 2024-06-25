@@ -42,13 +42,13 @@ def print_metrics(*metrics: tuple[str, Metrics]) -> None:
         last_key, last_value = metric_items[-1]
         print(f"{last_key}: {last_value:.4f}")
 
-def compute_metrics(references: list[int], predictions: list[int], running_loss: float, batch_len: int) -> Metrics:
+def compute_metrics(references: list[int], predictions: list[int], total_loss: float, batch_len: int) -> Metrics:
     return {
         "accuracy": accuracy_score(references, predictions),
         "precision": precision_score(references, predictions, average = "macro"),
         "recall": recall_score(references, predictions, average = "macro"),
         "f1": f1_score(references, predictions, average = "macro"),
-        "loss": running_loss / batch_len
+        "loss": total_loss / batch_len
     } # type: ignore
 
 def evaluate(
@@ -58,7 +58,7 @@ def evaluate(
     device: torch.device
 ) -> Metrics:
     model.eval()
-    running_loss = 0.0
+    total_loss = 0.0
     predictions: list[int] = []
     references: list[int] = []
 
@@ -72,11 +72,10 @@ def evaluate(
 
             outputs: Tensor = model(waveform)
             loss: Tensor = loss_criterion(outputs, labels)
-
-            running_loss += loss.item()
+            total_loss += loss.item()
 
             pred = torch.argmax(outputs, dim=1)
             predictions.extend(pred.cpu().tolist()) # type: ignore
             references.extend(labels.cpu().tolist()) # type: ignore
 
-    return compute_metrics(references, predictions, running_loss, len(dataloader))
+    return compute_metrics(references, predictions, total_loss, len(dataloader))
