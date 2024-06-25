@@ -46,30 +46,30 @@ OPTIMIZERS = {
 ValidEvaluationMetrics = typing.get_args(EvaluationMetric)
 
 class DataConfig:
-    train_ratio: float
-    test_val_ratio: float
+    train_ratio: int | float
+    test_val_ratio: int | float
     data_dir: str
 
-    def __init__(self, train_ratio: float, test_val_ratio: float, data_dir: str) -> None:
-        if train_ratio <= 0 or train_ratio > 1:
-            raise ValueError(f"'train_ratio' of {train_ratio} must be in the range (0, 1]")
+    def __init__(self, train_ratio: int | float, test_val_ratio: int | float, data_dir: str) -> None:
+        if not 0 < train_ratio < 1:
+            raise ValueError(f"'train_ratio' of {train_ratio} must be in the range (0, 1)")
 
-        if test_val_ratio <= 0 or test_val_ratio > 1:
-            raise ValueError(f"'test_val_ratio' of {test_val_ratio} must be in the range (0, 1]")
+        if not 0 < test_val_ratio < 1:
+            raise ValueError(f"'test_val_ratio' of {test_val_ratio} must be in the range (0, 1)")
 
         if not os.path.isdir(data_dir):
-            raise ValueError(f"'data_dir' of '{data_dir}' must be a valid directory path")
+            raise ValueError(f"'data_dir' of '{data_dir}' must be a directory path")
 
         self.train_ratio = train_ratio
         self.test_val_ratio = test_val_ratio
         self.data_dir = data_dir
 
 class ModelConfig:
-    dropout: float
+    dropout: int | float
 
-    def __init__(self, dropout: float) -> None:
-        if dropout <= 0 or dropout > 1:
-            raise ValueError(f"'dropout' of {dropout} must be in the range (0, 1]")
+    def __init__(self, dropout: int | float) -> None:
+        if not 0 <= dropout <= 1:
+            raise ValueError(f"'dropout' of {dropout} must be in the range [0, 1]")
 
         self.dropout = dropout
 
@@ -77,9 +77,9 @@ class TrainingConfig:
     epochs: int
     batch_size: int
     optimizer: OptimizerName
-    base_lr: float
+    max_lr: float
     min_lr: float
-    warmup_ratio: float
+    warmup_ratio: int | float
     checkpoint_dir: str
     model_name: str
     device: torch.device
@@ -91,32 +91,35 @@ class TrainingConfig:
         epochs: int,
         batch_size: int,
         optimizer: str,
-        base_lr: float,
+        max_lr: float,
         min_lr: float,
-        warmup_ratio: float,
+        warmup_ratio: int | float,
         checkpoint_dir: str,
         model_name: str,
         device_name: str,
         evaluation_metric: str,
         best_metric_lower_is_better: bool
     ) -> None:
-        if batch_size <= 1:
-            raise ValueError(f"`batch_size` must be greater than 1")
+        if not epochs >= 1:
+            raise ValueError(f"`epochs` must be greater or equal than 1")
+
+        if not batch_size >= 4:
+            raise ValueError(f"`batch_size` must be greater or equal than 4")
 
         if optimizer not in ValidOptimizerNames:
             raise ValueError(f"'{optimizer}' must be one of {ValidOptimizerNames}")
 
-        if base_lr <= 0:
-            raise ValueError(f"'base_lr' of {base_lr} must be a positive float")
+        if not max_lr > 0:
+            raise ValueError(f"'max_lr' of {max_lr} must be greater than 0")
 
-        if min_lr <= 0:
-            raise ValueError(f"'min_lr' of {min_lr} must be a positive float")
+        if not min_lr > 0:
+            raise ValueError(f"'min_lr' of {min_lr} must be greater than 0")
 
-        if base_lr < min_lr:
-            raise ValueError(f"'base_lr' of {base_lr} must be greater than 'min_lr' of {min_lr}")
+        if not max_lr >= min_lr:
+            raise ValueError(f"'max_lr' of {max_lr} must be greater or equal than 'min_lr' of {min_lr}")
 
-        if warmup_ratio <= 0 or warmup_ratio > 1:
-            raise ValueError(f"'warmup_ratio' of {warmup_ratio} must be in the range (0, 1]")
+        if not 0 <= warmup_ratio <= 1:
+            raise ValueError(f"'warmup_ratio' of {warmup_ratio} must be in the range [0, 1]")
 
         if not os.path.isdir(checkpoint_dir):
             raise ValueError(f"'checkpoint_dir' of {checkpoint_dir} must be a valid directory path")
@@ -136,7 +139,7 @@ class TrainingConfig:
         self.epochs = epochs
         self.batch_size = batch_size
         self.optimizer = optimizer # type: ignore
-        self.base_lr = base_lr
+        self.max_lr = max_lr
         self.min_lr = min_lr
         self.warmup_ratio = warmup_ratio
         self.checkpoint_dir = checkpoint_dir
@@ -177,7 +180,7 @@ class Config:
 
     def __init__(self) -> None:
         T = TypeVar("T")
-        def take_item(config: dict[str, Any], attribute_name: str, expected_type: type[T]) -> T:
+        def take(config: dict[str, Any], attribute_name: str, expected_type: type[T]) -> T:
             try:
                 attribute = config[attribute_name]
             except:
@@ -195,6 +198,24 @@ class Config:
 
             return attribute
 
+        def take_either(config: dict[str, Any], attribute_name: str, expected_types: typing.Sequence[type[T]]) -> T:
+            assert len(expected_types) >= 1, "At least one type must be provided"
+
+            for expected_type in expected_types:
+                try:
+                    return take(config, attribute_name, expected_type)
+                except TypeError:
+                    pass
+
+            types = "("
+            for type_ in expected_types[: -1]:
+                types += f"'{type_.__name__}', "
+
+            last_type = expected_types[-1]
+            types += f"'{last_type.__name__}')"
+
+            raise TypeError(f"actual type of '{attribute_name}' doesn't match any of the expected types of {types}")
+
         def args() -> dict[str, Any]:
             """
             Questa funzione ci permette di sovrascrivere il tipo di ritorno della funzione 'add_arguments'
@@ -203,45 +224,43 @@ class Config:
 
         config = args()
 
-        data = take_item(config, "data", dict[str, Any])
-        train_ratio = take_item(data, "train_ratio", float)
-        test_val_ratio = take_item(data, "test_val_ratio", float)
-        data_dir = take_item(data, "data_dir", str)
+        data = take(config, "data", dict[str, Any])
+        train_ratio = take_either(data, "train_ratio", [int, float])
+        test_val_ratio = take_either(data, "test_val_ratio", [int, float])
+        data_dir = take(data, "data_dir", str)
 
         # Controlliamo che non siano presenti attributi non riconosciuti
         for key, value in data.items():
             raise ValueError(f"Unrecognized configuration attribute {key}: {value}")
 
-        model = take_item(config, "model", dict[str, Any])
-        dropout = take_item(model, "dropout", float)
+        model = take(config, "model", dict[str, Any])
+        dropout = take_either(model, "dropout", [int, float])
 
         # Controlliamo che non siano presenti attributi non riconosciuti
         for key, value in model.items():
             raise ValueError(f"Unrecognized configuration attribute {key}: {value}")
 
-        training = take_item(config, "training", dict[str, Any])
-        epochs = take_item(training, "epochs", int)
-        batch_size = take_item(training, "batch_size", int)
-        optimizer = take_item(training, "optimizer", str)
-        base_lr = take_item(training, "base_lr", float)
-        min_lr = take_item(training, "min_lr", float)
-        warmup_ratio = take_item(training, "warmup_ratio", float)
-        checkpoint_dir = take_item(training, "checkpoint_dir", str)
-        model_name = take_item(training, "model_name", str)
-        device = take_item(training, "device", str)
-        evaluation_metric = take_item(training, "evaluation_metric", str)
-        best_metric_lower_is_better = take_item(training, "best_metric_lower_is_better", bool)
+        training = take(config, "training", dict[str, Any])
+        epochs = take(training, "epochs", int)
+        batch_size = take(training, "batch_size", int)
+        optimizer = take(training, "optimizer", str)
+        max_lr = take(training, "max_lr", float)
+        min_lr = take(training, "min_lr", float)
+        warmup_ratio = take_either(training, "warmup_ratio", [int, float])
+        checkpoint_dir = take(training, "checkpoint_dir", str)
+        model_name = take(training, "model_name", str)
+        device = take(training, "device", str)
+        evaluation_metric = take(training, "evaluation_metric", str)
+        best_metric_lower_is_better = take(training, "best_metric_lower_is_better", bool)
 
         # Controlliamo che non siano presenti attributi non riconosciuti
         for key, value in training.items():
             raise ValueError(f"Unrecognized configuration attribute {key}: {value}")
 
         try:
-            metrics = take_item(config, "plot", str)
+            metrics = take_either(config, "plot", [str, list[str]])
         except AttributeError:
             metrics = None
-        except TypeError:
-            metrics = take_item(config, "plot", list[str])
 
         # Controlliamo che non siano presenti attributi non riconosciuti
         for key, value in config.items():
@@ -253,7 +272,7 @@ class Config:
             epochs,
             batch_size,
             optimizer,
-            base_lr,
+            max_lr,
             min_lr,
             warmup_ratio,
             checkpoint_dir,

@@ -89,7 +89,7 @@ if __name__ == "__main__":
     epochs = config.training.epochs
     total_steps = len(train_dl) * epochs
 
-    base_lr = config.training.base_lr
+    max_lr = config.training.max_lr
     min_lr = config.training.min_lr
 
     warmup_steps = int(total_steps * config.training.warmup_ratio)
@@ -101,19 +101,19 @@ if __name__ == "__main__":
         lr_factor = (total_steps - step) / (total_steps - warmup_steps)
 
         # Non ancora al minimo learning rate
-        next_lr = base_lr * lr_factor
+        next_lr = max_lr * lr_factor
         if next_lr > min_lr:
             return lr_factor
 
         # Al minimo learning rate, quindi ritorniamo un fattore che moltiplicato al learning rate
         # corrente ci ritorna il learning rate minimo specificato da configurazione, quindi:
-        # base_lr * next_min_lr_factor = min_lr -> next_min_rl_factor = min_lr / base_lr
-        return min_lr / base_lr
+        # max_lr * next_min_lr_factor = min_lr -> next_min_rl_factor = min_lr / max_lr
+        return min_lr / max_lr
 
     # Definisce un optimizer con il learning rate specificato
     optimizer = config.training.optimizer
     optimizer = OPTIMIZERS[optimizer]
-    optimizer = optimizer(model.parameters(), lr = base_lr)
+    optimizer = optimizer(model.parameters(), lr = max_lr)
 
     scheduler = LambdaLR(optimizer, lr_lambda = lr_warmup_linear_decay)
 
@@ -179,6 +179,7 @@ if __name__ == "__main__":
                     metric_history["train"].append(train_metric)
                     metric_history["val"].append(val_metric)
 
+        # Teniamo traccia della metrica considerata migliore, e salva il modello che massimizza/minimizza
         val_metric = val_metrics[evaluation_metric]
         is_best = val_metric <= best_val_metric if best_metric_lower_is_better else val_metric > best_val_metric
         if is_best:
@@ -201,13 +202,14 @@ if __name__ == "__main__":
 
     print("Model saved")
 
-    # Plot delle metriche di training e validation
-    epochs_steps = range(0, epochs + 1)
 
     match metrics_to_plot:
         case None:
             pass
         case str():
+            # Plot delle metriche di training e validation
+            epochs_steps = range(0, epochs + 1)
+
             metric: MetricsHistory = metrics # type: ignore
             metric_to_plot = metric["metric"]
 
@@ -226,6 +228,9 @@ if __name__ == "__main__":
             pyplot.legend() # type: ignore
             pyplot.grid(True) # type: ignore
         case list():
+            # Plot delle metriche di training e validation
+            epochs_steps = range(0, epochs + 1)
+
             multiple_metrics: list[MetricsHistory] = metrics # type: ignore
 
             metrics_count = len(multiple_metrics)

@@ -37,33 +37,33 @@ adibiti alla configurazione degli iperparametri del modello, ovvero:
 
 - **data**: parametri di configurazione del dataset
 
-    | Nome               | Tipo  |  Valori accettati  | Descrizione                                                                      |
-    | :----------------- | :---- | :----------------: | :------------------------------------------------------------------------------- |
-    | **train_ratio**    | float |      \[0, 1)       | proporzione di divisione del dataset in train e test/validazione                 |
-    | **test_val_ratio** | float |      \[0, 1)       | proporzione di divisione del dataset in test e validazione                       |
-    | **data_dir**       | str   | percorso directory | percorso directory dataset (precedentemente scaricati nella directory `dataset`) |
+    | Nome               | Tipo         |  Valori accettati  | Descrizione                                                                      |
+    | :----------------- | :----------- | :----------------: | :------------------------------------------------------------------------------- |
+    | **train_ratio**    | int \| float |       (0, 1)       | proporzione di divisione del dataset in train e test/validazione                 |
+    | **test_val_ratio** | int \| float |       (0, 1)       | proporzione di divisione del dataset in test e validazione                       |
+    | **data_dir**       | str          | percorso directory | percorso directory dataset (precedentemente scaricati nella directory `dataset`) |
 
 - **model**: parametri di configurazione del modello
 
-    | Nome        | Tipo  | Valori accettati | Descrizione                                              |
-    | :---------- | :---- | :--------------: | :------------------------------------------------------- |
-    | **dropout** | float |     \[0, 1)      | percentuale dropout da applicare tra un layer e un altro |
+    | Nome        | Tipo         | Valori accettati | Descrizione                                              |
+    | :---------- | :----------- | :--------------: | :------------------------------------------------------- |
+    | **dropout** | int \| float |     \[0, 1]      | percentuale dropout da applicare tra un layer e un altro |
 
 - **training**: parametri di configurazione durante il training
 
-    | Nome                            | Tipo  |                                       Valori accettati                                        | Descrizione                                                                                                                                            |
-    | :------------------------------ | :---- | :-------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | **epochs**                      | int   |                                                                                               | epoche per cui addestrare il modello                                                                                                                   |
-    | **batch_size**                  | int   |                                              > 1                                              | dimensione delle singole batch con cui addestrare il modello                                                                                           |
-    | **optimizer**                   | str   | adadelta, adagrad, adamax, adamw, asgd, lbfgs, nadam, radam, rmsprop, rprop, sgd, sparse_adam | ottimizzatore da uilizzare                                                                                                                             |
-    | **base_lr**                     | float |                                              > 0                                              | learning rate da uilizzare come base                                                                                                                   |
-    | **min_lr**                      | float |                                              > 0                                              | learning rate da uilizzare come minimo per il decay lineare                                                                                            |
-    | **warmup_ratio**                | float |                                            \[0, 1)                                            | percentuale di epoche dopo le quali il learning rate andrà a diminuire linearmente                                                                     |
-    | **checkpoint_dir**              | str   |                                      percorso directory                                       | percorso directory in cui salvare il modello dopo la fine dell'addestramento                                                                           |
-    | **model_name**                  | str   |                                                                                               | nome con cui salvare il modello dopo la fine dell'addestramento                                                                                        |
-    | **device**                      | str   |                                        cpu, cuda, mps                                         | dispositivo di accelerazione hardware da utilizzare durante l'addestramento                                                                            |
-    | **evaluation_metric**           | str   |                             accuracy, precision, recall, f1, loss                             | metrica da tenere in considerazione durante la valutazione del modello                                                                                 |
-    | **best_metric_lower_is_better** | bool  |                                                                                               | indica se la metrica da tenere in considerazione durante la valutazione del modello è da considerarsi migliore se è inferiore o superiore a una soglia |
+    | Nome                            | Tipo         |                                       Valori accettati                                        | Descrizione                                                                                                                                            |
+    | :------------------------------ | :----------- | :-------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | **epochs**                      | int          |                                             >= 1                                              | epoche per cui addestrare il modello                                                                                                                   |
+    | **batch_size**                  | int          |                                             >= 4                                              | dimensione delle singole batch con cui addestrare il modello                                                                                           |
+    | **optimizer**                   | str          | adadelta, adagrad, adamax, adamw, asgd, lbfgs, nadam, radam, rmsprop, rprop, sgd, sparse_adam | ottimizzatore da uilizzare                                                                                                                             |
+    | **max_lr**                      | float        |                                              > 0                                              | learning rate da uilizzare come base                                                                                                                   |
+    | **min_lr**                      | float        |                                        > 0, <= max_lr                                         | learning rate da uilizzare come minimo per il decay lineare                                                                                            |
+    | **warmup_ratio**                | int \| float |                                            \[0, 1]                                            | percentuale di epoche dopo le quali il learning rate andrà a diminuire linearmente                                                                     |
+    | **checkpoint_dir**              | str          |                                      percorso directory                                       | percorso directory in cui salvare il modello dopo la fine dell'addestramento                                                                           |
+    | **model_name**                  | str          |                                                                                               | nome con cui salvare il modello dopo la fine dell'addestramento                                                                                        |
+    | **device**                      | str          |                                        cpu, cuda, mps                                         | dispositivo di accelerazione hardware da utilizzare durante l'addestramento                                                                            |
+    | **evaluation_metric**           | str          |                             accuracy, precision, recall, f1, loss                             | metrica da tenere in considerazione durante la valutazione del modello                                                                                 |
+    | **best_metric_lower_is_better** | bool         |                                                                                               | indica se la metrica da tenere in considerazione durante la valutazione del modello è da considerarsi migliore se è inferiore o superiore a una soglia |
 
 - parametri singoli:
 
