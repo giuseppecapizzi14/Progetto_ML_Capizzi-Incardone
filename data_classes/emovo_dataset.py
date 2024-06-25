@@ -10,7 +10,6 @@ from torchaudio.transforms import Resample
 
 class Sample(TypedDict):
     waveform: Tensor
-    sample_rate: int
     label: int
 
 class EmovoDataset(Dataset[Sample]):
@@ -24,12 +23,18 @@ class EmovoDataset(Dataset[Sample]):
         "neu": 6,
     }
 
-    EXPECTED_SAMPLE_RATE = 48000
+    EXPECTED_SAMPLE_RATE = 48_000
     TARGET_SAMPLE_RATE = 16_000
+
+    # Ci aspettiamo che gli audio abbiano due canali, cioè siano in audio stereo
     EXPECTED_CHANNELS = 2
 
+    audio_files: list[str]
+    labels: list[int]
+    resample: bool
+    max_sample_len: int
+
     def __init__(self, data_path: str, resample: bool = True):
-        self.data_path = data_path
         self.audio_files: list[str] = []
         self.labels: list[int] = []
         self.resample = resample
@@ -101,6 +106,5 @@ class EmovoDataset(Dataset[Sample]):
 
         return {
             "waveform": waveform,
-            "sample_rate": sample_rate,
             "label": label
         }
