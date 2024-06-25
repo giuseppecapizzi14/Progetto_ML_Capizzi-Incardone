@@ -115,13 +115,8 @@ class TrainingConfig:
         if not min_lr > 0:
             raise ValueError(f"'min_lr' of {min_lr} must be greater than 0")
 
-<<<<<<< HEAD
-        if base_lr < min_lr:
-            raise ValueError(f"'base_lr' of {base_lr} must be greater than 'min_lr' of {min_lr}")
-=======
         if not max_lr >= min_lr:
             raise ValueError(f"'max_lr' of {max_lr} must be greater or equal than 'min_lr' of {min_lr}")
->>>>>>> 9bbb123383bc7477fdd2a71877ec7d9b94bb5924
 
         if not 0 <= warmup_ratio <= 1:
             raise ValueError(f"'warmup_ratio' of {warmup_ratio} must be in the range [0, 1]")
