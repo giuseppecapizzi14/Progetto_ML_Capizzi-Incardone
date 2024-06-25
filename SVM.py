@@ -22,10 +22,8 @@ if __name__ == "__main__":
     # |------- dataset -------|
     # |---train---|---test----|
     dataset_size = len(dataset)
-
     train_size = int(config.data.train_ratio * dataset_size)
     test_size = dataset_size - train_size
-
     train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
 
     # Crea i DataLoader
