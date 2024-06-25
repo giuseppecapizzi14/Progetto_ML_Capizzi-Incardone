@@ -1,13 +1,13 @@
 data:
   train_ratio: 0.85
-  test_val_ratio: 0.4
+  test_val_ratio: 0.35
   data_dir: dataset
 
 model:
-  dropout: 0.2
+  dropout: 0.25
 
 training:
-  epochs: 5
+  epochs: 40
   batch_size: 16
   optimizer: adam
   base_lr: 0.005
@@ -15,8 +15,8 @@ training:
   warmup_ratio: 0.3
   checkpoint_dir: checkpoints/
   model_name: best_model
-  device: cuda
+  device: mps
   evaluation_metric: accuracy
   best_metric_lower_is_better: false
 
-plotting: [accuracy, loss]
+plot: [accuracy, loss]
