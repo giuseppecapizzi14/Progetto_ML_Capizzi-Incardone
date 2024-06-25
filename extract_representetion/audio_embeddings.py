@@ -19,6 +19,10 @@ class AudioEmbeddings:
     Usa il modello Wav2Vec2 come default.
     """
 
+    processor: Wav2Vec2FeatureExtractor
+    model: PreTrainedModel
+    device: torch.device
+
     def __init__(self, device: torch.device, model_name: str = "ALM/hubert-base-audioset"):
         self.processor: Wav2Vec2FeatureExtractor = AutoFeatureExtractor.from_pretrained(model_name) # type: ignore
         self.model: PreTrainedModel = AutoModel.from_pretrained(model_name) # type: ignore

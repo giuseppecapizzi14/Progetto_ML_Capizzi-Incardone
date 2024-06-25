@@ -6,6 +6,12 @@ from data_classes.emovo_dataset import EmovoDataset
 
 
 class EmovoCNN(Module):
+    # Strati convoluzionali per estrarre le features rilevanti
+    feature_extraction: Sequential
+
+    # Strati fully-connected lineari di classificazione
+    classification: Sequential
+
     def __init__(self, waveform_size: int, dropout: float, device: torch.device):
         def output_size(input_size: int, padding: int, kernel_size: int, stride: int) -> int:
             return (input_size + 2 * padding - kernel_size) // stride + 1
@@ -50,7 +56,7 @@ class EmovoCNN(Module):
         )
 
         # Calcoliamo la dimensione dell'output di tutti gli strati convoluzionali
-        self.sample_len = waveform_size
+        sample_len = waveform_size
 
         # Teniamo traccia dell'ultimo strato convoluzionale per calcolare la dimensione dell'input
         # degli strati fully-connected
@@ -65,21 +71,21 @@ class EmovoCNN(Module):
                     kernel_size = layer.kernel_size[0]
                     stride = layer.stride[0]
 
-                    self.sample_len = output_size(self.sample_len, padding, kernel_size, stride)
+                    sample_len = output_size(sample_len, padding, kernel_size, stride)
                 case MaxPool1d():
                     padding: int = layer.padding # type: ignore
                     kernel_size: int = layer.kernel_size # type: ignore
                     stride: int = layer.stride # type: ignore
 
-                    self.sample_len = output_size(self.sample_len, padding, kernel_size, stride)
+                    sample_len = output_size(sample_len, padding, kernel_size, stride)
                 case _:
                     pass
 
-        assert not last_conv_layer is None, "Almeno uno strato convoluzionale deve essere presente"
+        assert not last_conv_layer is None, "At least one convolutional layer must be present"
 
         self.classification = Sequential(
             # Primo strato completamente connesso
-            Linear(in_features = last_conv_layer.out_channels * self.sample_len, out_features = 128, device = device),
+            Linear(in_features = last_conv_layer.out_channels * sample_len, out_features = 128, device = device),
             BatchNorm1d(num_features = 128, device = device),
             ReLU(inplace = True),
             Dropout(dropout),
