@@ -47,7 +47,7 @@ adibiti alla configurazione degli iperparametri del modello, ovvero:
 
     | Nome        | Tipo  | Valori accettati | Descrizione                                              |
     | :---------- | :---- | :--------------: | :------------------------------------------------------- |
-    | **dropout** | float |     \[0, 1]      | percentuale dropout da applicare tra un layer e un altro |
+    | **dropout** | float |     \[0, 1)      | percentuale dropout da applicare tra un layer e un altro |
 
 - **training**: parametri di configurazione durante il training
 
@@ -67,9 +67,9 @@ adibiti alla configurazione degli iperparametri del modello, ovvero:
 
 - parametri singoli:
 
-    | Nome     | Tipo                      |           Valori accettati            | Descrizione                                                                           |
-    | :------- | :------------------------ | :-----------------------------------: | :------------------------------------------------------------------------------------ |
-    | **plot** | str \| list\[str] \| None | accuracy, precision, recall, f1, loss | metriche da tenere in considerazione, se presenti, durante il plotting delle metriche |
+    | Nome     | Tipo              |           Valori accettati            | Descrizione                                                                                                                               |
+    | :------- | :---------------- | :-----------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------- |
+    | **plot** | str \| list\[str] | accuracy, precision, recall, f1, loss | metriche da tenere in considerazione durante il plotting delle metriche (questo parametro potrebbe essere omesso per non plottare niente) |
 
 ## Risoluzione problemi
 

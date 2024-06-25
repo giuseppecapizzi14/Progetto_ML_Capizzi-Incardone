@@ -113,7 +113,7 @@ class TrainingConfig:
             raise ValueError(f"'min_lr' of {min_lr} must be a positive float")
 
         if base_lr < min_lr:
-            raise ValueError(f"'base_lr' of {base_lr} must be greater that 'min_lr' of {min_lr}")
+            raise ValueError(f"'base_lr' of {base_lr} must be greater than 'min_lr' of {min_lr}")
 
         if warmup_ratio <= 0 or warmup_ratio > 1:
             raise ValueError(f"'warmup_ratio' of {warmup_ratio} must be in the range (0, 1]")
